@@ -1,0 +1,13 @@
+.\build\ff.o: ..\..\rtt\rt-thread-2.0.0_beta\components\dfs\filesystems\elmfat\ff.c
+.\build\ff.o: ..\..\rtt\rt-thread-2.0.0_beta\components\dfs\filesystems\elmfat\ff.h
+.\build\ff.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtthread.h
+.\build\ff.o: .\rtconfig.h
+.\build\ff.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtdebug.h
+.\build\ff.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtdef.h
+.\build\ff.o: D:\Keil_v5\ARM\ARMCC\bin\..\include\stdarg.h
+.\build\ff.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtservice.h
+.\build\ff.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtm.h
+.\build\ff.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtthread.h
+.\build\ff.o: ..\..\rtt\rt-thread-2.0.0_beta\components\dfs\filesystems\elmfat\integer.h
+.\build\ff.o: ..\..\rtt\rt-thread-2.0.0_beta\components\dfs\filesystems\elmfat\ffconf.h
+.\build\ff.o: ..\..\rtt\rt-thread-2.0.0_beta\components\dfs\filesystems\elmfat\diskio.h

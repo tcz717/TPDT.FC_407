@@ -1,0 +1,16 @@
+.\build\spi_flash_w25qxx.o: ..\..\rtt\rt-thread-2.0.0_beta\components\drivers\spi\spi_flash_w25qxx.c
+.\build\spi_flash_w25qxx.o: D:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+.\build\spi_flash_w25qxx.o: ..\..\rtt\rt-thread-2.0.0_beta\components\drivers\include\rtdevice.h
+.\build\spi_flash_w25qxx.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtthread.h
+.\build\spi_flash_w25qxx.o: .\rtconfig.h
+.\build\spi_flash_w25qxx.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtdebug.h
+.\build\spi_flash_w25qxx.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtdef.h
+.\build\spi_flash_w25qxx.o: D:\Keil_v5\ARM\ARMCC\bin\..\include\stdarg.h
+.\build\spi_flash_w25qxx.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtservice.h
+.\build\spi_flash_w25qxx.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtm.h
+.\build\spi_flash_w25qxx.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtthread.h
+.\build\spi_flash_w25qxx.o: ..\..\rtt\rt-thread-2.0.0_beta\components\drivers\include\drivers/spi.h
+.\build\spi_flash_w25qxx.o: D:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
+.\build\spi_flash_w25qxx.o: ..\..\rtt\rt-thread-2.0.0_beta\components\drivers\include\drivers/spi_flash_w25qxx.h
+.\build\spi_flash_w25qxx.o: ..\..\rtt\rt-thread-2.0.0_beta\components\drivers\include\drivers/i2c.h
+.\build\spi_flash_w25qxx.o: ..\..\rtt\rt-thread-2.0.0_beta\components\drivers\include\drivers/i2c_dev.h

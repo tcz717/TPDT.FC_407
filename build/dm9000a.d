@@ -1,0 +1,10 @@
+.\build\dm9000a.o: drivers\dm9000a.c
+.\build\dm9000a.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtthread.h
+.\build\dm9000a.o: .\rtconfig.h
+.\build\dm9000a.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtdebug.h
+.\build\dm9000a.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtdef.h
+.\build\dm9000a.o: D:\Keil_v5\ARM\ARMCC\bin\..\include\stdarg.h
+.\build\dm9000a.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtservice.h
+.\build\dm9000a.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtm.h
+.\build\dm9000a.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtthread.h
+.\build\dm9000a.o: drivers\dm9000a.h

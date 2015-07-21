@@ -1,0 +1,17 @@
+.\build\finsh_node.o: ..\..\rtt\rt-thread-2.0.0_beta\components\finsh\finsh_node.c
+.\build\finsh_node.o: ..\..\rtt\rt-thread-2.0.0_beta\components\finsh\finsh.h
+.\build\finsh_node.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtthread.h
+.\build\finsh_node.o: .\rtconfig.h
+.\build\finsh_node.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtdebug.h
+.\build\finsh_node.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtdef.h
+.\build\finsh_node.o: D:\Keil_v5\ARM\ARMCC\bin\..\include\stdarg.h
+.\build\finsh_node.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtservice.h
+.\build\finsh_node.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtm.h
+.\build\finsh_node.o: ..\..\rtt\rt-thread-2.0.0_beta\include\rtthread.h
+.\build\finsh_node.o: D:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
+.\build\finsh_node.o: D:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
+.\build\finsh_node.o: D:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+.\build\finsh_node.o: ..\..\rtt\rt-thread-2.0.0_beta\components\finsh\finsh_node.h
+.\build\finsh_node.o: ..\..\rtt\rt-thread-2.0.0_beta\components\finsh\finsh_error.h
+.\build\finsh_node.o: ..\..\rtt\rt-thread-2.0.0_beta\components\finsh\finsh_var.h
+.\build\finsh_node.o: ..\..\rtt\rt-thread-2.0.0_beta\components\finsh\finsh_heap.h
