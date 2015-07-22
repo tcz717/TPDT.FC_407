@@ -71,12 +71,9 @@ static rt_uint8_t led_stack[ 256 ];
 static struct rt_thread led_thread;
 
 ALIGN(RT_ALIGN_SIZE)
-static rt_uint8_t control_stack[ 512 ];
+static rt_uint8_t control_stack[ 768 ];
 static struct rt_thread control_thread;
 
-ALIGN(RT_ALIGN_SIZE)
-static rt_uint8_t ahrs_stack[ 768 ];
-static struct rt_thread ahrs_thread;
 static struct rt_event ahrs_event;
 
 ALIGN(RT_ALIGN_SIZE)
@@ -117,6 +114,77 @@ void led_thread_entry(void* parameter)
 }
 
 
+
+u8 en_out_ahrs=0;
+short gyro[3], accel[3], sensors;   
+static volatile Quaternion curq={1.0,0.0,0.0,0.0};
+#define q0 curq.q0
+#define q1 curq.q1
+#define q2 curq.q2
+#define q3 curq.q3
+#define DEFAULT_MPU_HZ  (200)
+#define q30  1073741824.0f
+const double gyroscale = 2000;	
+static signed char gyro_orientation[9] = {-1, 0, 0,
+                                           0,-1, 0,
+                                           0, 0, 1};
+static  unsigned short inv_row_2_scale(const signed char *row)
+{
+    unsigned short b;
+    if (row[0] > 0)
+        b = 0;
+    else if (row[0] < 0)
+        b = 4;
+    else if (row[1] > 0)
+        b = 1;
+    else if (row[1] < 0)
+        b = 5;
+    else if (row[2] > 0)
+        b = 2;
+    else if (row[2] < 0)
+        b = 6;
+    else
+        b = 7;      // error
+    return b;
+}
+static  unsigned short inv_orientation_matrix_to_scalar(const signed char *mtx)
+{
+    unsigned short scalar;
+    scalar = inv_row_2_scale(mtx);
+    scalar |= inv_row_2_scale(mtx + 3) << 3;
+    scalar |= inv_row_2_scale(mtx + 6) << 6;
+    return scalar;
+}
+static void run_self_test(void)
+{
+    int result;
+    long gyro[3], accel[3];
+    result = mpu_run_self_test(gyro, accel);
+    if (result == 0x7) 
+    {
+        /* Test passed. We can trust the gyro data here, so let's push it down
+         * to the DMP.
+         */
+        float sens;
+        unsigned short accel_sens;
+        mpu_get_gyro_sens(&sens);
+        gyro[0] = (long)(gyro[0] * sens);
+        gyro[1] = (long)(gyro[1] * sens);
+        gyro[2] = (long)(gyro[2] * sens);
+        dmp_set_gyro_bias(gyro);
+        mpu_get_accel_sens(&accel_sens);
+        accel[0] *= accel_sens;
+        accel[1] *= accel_sens;
+        accel[2] *= accel_sens;
+        dmp_set_accel_bias(accel);
+    }
+}
+unsigned long sensor_timestamp;
+unsigned char more;
+long quat[4];
+#define PITCH_D -1.25
+#define ROLL_D 5
+
 u8 balence=0;
 u8 pwmcon=0;
 PID p_rate_pid,r_rate_pid,y_rate_pid,
@@ -125,10 +193,96 @@ PID	h_pid;
 s16 pitch_ctl[16],roll_ctl[16],yaw_ctl[16];
 
 rt_bool_t lost_ahrs=RT_FALSE;
-rt_tick_t last_ahrs;
 
 u8 en_out_pwm=0;
 FINSH_VAR_EXPORT(pwmcon,finsh_type_uchar,lock state)
+
+void dmp_init()
+{
+	Timer4_init();
+	
+	while(1 == mpu_init());
+	//mpu_set_sensor
+	while(1 == mpu_set_sensors(INV_XYZ_GYRO | INV_XYZ_ACCEL));  
+
+	//mpu_configure_fifo
+	while(1 == mpu_configure_fifo(INV_XYZ_GYRO | INV_XYZ_ACCEL));
+
+	//mpu_set_sample_rate
+	while(1 == mpu_set_sample_rate(DEFAULT_MPU_HZ));
+
+	//dmp_load_motion_driver_firmvare
+	while(1 == dmp_load_motion_driver_firmware());
+
+	//dmp_set_orientation
+	while(1 == dmp_set_orientation(inv_orientation_matrix_to_scalar(gyro_orientation)));
+
+	//dmp_enable_feature
+	while(1 == dmp_enable_feature(DMP_FEATURE_6X_LP_QUAT | DMP_FEATURE_TAP |
+		DMP_FEATURE_ANDROID_ORIENT | DMP_FEATURE_SEND_RAW_ACCEL | DMP_FEATURE_SEND_CAL_GYRO |
+		DMP_FEATURE_GYRO_CAL));
+	
+	//dmp_set_fifo_rate
+	while(1 == dmp_set_fifo_rate(DEFAULT_MPU_HZ));
+
+	run_self_test();
+	
+	while(1 == mpu_set_dmp_state(1));
+	
+	rt_kprintf("start mpu6050\n");
+	
+	rt_kprintf("start ahrs\n");
+}
+
+static u16 dmp_retry=0;
+extern volatile int16_t MPU6050_GYR_FIFO[3][256];
+u8 get_dmp()
+{
+	float gp,gr,gy;
+	dmp_read_fifo(gyro, accel, quat, &sensor_timestamp, &sensors, &more);
+	if (sensors & INV_WXYZ_QUAT )
+	{
+		q0 = (double)quat[0] / q30;
+		q1 = (double)quat[1] / q30;
+		q2 = (double)quat[2] / q30;
+		q3 = (double)quat[3] / q30;
+		
+		gp = - gyro[0] * gyroscale / 32767.0;
+		gr = - gyro[1] * gyroscale / 32767.0;
+		gy = - gyro[2] * gyroscale / 32767.0;
+		
+		if(abs(gp-ahrs.gryo_pitch)>200.0||abs(gr-ahrs.gryo_roll)>200.0||abs(gy-ahrs.gryo_yaw)>200.0)
+			goto lost;
+		
+		mpu_gryo_pitch=MoveAve_WMA(gyro[0], MPU6050_GYR_FIFO[0], 8);
+		mpu_gryo_roll=MoveAve_WMA(gyro[1], MPU6050_GYR_FIFO[1], 8);
+		mpu_gryo_yaw=MoveAve_WMA(gyro[2], MPU6050_GYR_FIFO[2], 8);
+		
+		ahrs.gryo_pitch		= -mpu_gryo_pitch 	* gyroscale / 32767.0;
+		ahrs.gryo_roll		= -mpu_gryo_roll 	* gyroscale / 32767.0;
+		ahrs.gryo_yaw		= -mpu_gryo_yaw 	* gyroscale / 32767.0;
+		
+		ahrs.degree_roll  = -asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3 +settings.angle_diff_roll;   //+ Pitch_error; // pitch
+		ahrs.degree_pitch = -atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3+settings.angle_diff_pitch ;  //+ Roll_error; // roll
+		ahrs.degree_yaw = atan2(2*(q1*q2 + q0*q3),q0*q0+q1*q1-q2*q2-q3*q3) * 57.3 ;  //+ Yaw_error;
+
+		ahrs.time_span=Timer4_GetSec();
+		
+		if(en_out_ahrs)
+			rt_kprintf("%d,%d,%d		%d\n",
+			(s32)(ahrs.degree_pitch),
+			(s32)(ahrs.degree_roll),
+			(s32)(ahrs.degree_yaw	),
+			(u32)(1.0/ahrs.time_span));
+		rt_event_send(&ahrs_event,AHRS_EVENT_Update);
+		
+		dmp_retry=0;
+		return 1;
+	}
+lost:
+	dmp_retry++;
+	return 0;
+}
 
 void correct_gryo()
 {
@@ -171,6 +325,7 @@ void control_thread_entry(void* parameter)
 	double pitch=0;
 	double roll=0;
 	double yaw=0;
+	u8 i;
 	
 	p_rate_pid.expect=0;
 	r_rate_pid.expect=0;
@@ -179,7 +334,16 @@ void control_thread_entry(void* parameter)
 	r_angle_pid.expect=0;
 	
 	LED2(5);
-	rt_thread_delay(RT_TICK_PER_SECOND*18);
+	dmp_init();
+	for(i=0;i<15;i++)
+	{
+		u8 j;
+		for(j=0;j<200;j++)
+		{
+			get_dmp();
+			rt_thread_delay(2);
+		}
+	}
 	
 	rt_kprintf("start control\n");
 	
@@ -248,7 +412,7 @@ void control_thread_entry(void* parameter)
 			y_rate_pid.iv=0;
 		}
 		
-		if(balence)
+		if(get_dmp()&&balence)
 		{
 			if(throttle>60&&abs(ahrs.degree_pitch)<40&&abs(ahrs.degree_roll)<40)
 			{
@@ -281,6 +445,15 @@ void control_thread_entry(void* parameter)
 			pwmcon=0;
 		}
 		
+		if(dmp_retry>200)
+		{
+			Motor_Set(0,0,0,0);
+			balence=0;
+			pwmcon=0;
+			LED3(2);
+			break;
+		}
+		
 		if(en_out_pwm)
 		{
 			rt_kprintf("\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
@@ -291,7 +464,7 @@ void control_thread_entry(void* parameter)
 //				Motor4,Motor5,Motor6);
 		}
 		
-		rt_thread_delay(4);
+		rt_thread_delay(2);
 	}
 }
 
@@ -346,147 +519,6 @@ void correct_thread_entry(void* parameter)
 	}
 }
 
-u8 en_out_ahrs=0;
-short gyro[3], accel[3], sensors;   
-static volatile Quaternion curq={1.0,0.0,0.0,0.0};
-#define q0 curq.q0
-#define q1 curq.q1
-#define q2 curq.q2
-#define q3 curq.q3
-#define DEFAULT_MPU_HZ  (200)
-#define q30  1073741824.0f
-static signed char gyro_orientation[9] = {-1, 0, 0,
-                                           0,-1, 0,
-                                           0, 0, 1};
-static  unsigned short inv_row_2_scale(const signed char *row)
-{
-    unsigned short b;
-    if (row[0] > 0)
-        b = 0;
-    else if (row[0] < 0)
-        b = 4;
-    else if (row[1] > 0)
-        b = 1;
-    else if (row[1] < 0)
-        b = 5;
-    else if (row[2] > 0)
-        b = 2;
-    else if (row[2] < 0)
-        b = 6;
-    else
-        b = 7;      // error
-    return b;
-}
-static  unsigned short inv_orientation_matrix_to_scalar(const signed char *mtx)
-{
-    unsigned short scalar;
-    scalar = inv_row_2_scale(mtx);
-    scalar |= inv_row_2_scale(mtx + 3) << 3;
-    scalar |= inv_row_2_scale(mtx + 6) << 6;
-    return scalar;
-}
-static void run_self_test(void)
-{
-    int result;
-    long gyro[3], accel[3];
-    result = mpu_run_self_test(gyro, accel);
-    if (result == 0x7) 
-    {
-        /* Test passed. We can trust the gyro data here, so let's push it down
-         * to the DMP.
-         */
-        float sens;
-        unsigned short accel_sens;
-        mpu_get_gyro_sens(&sens);
-        gyro[0] = (long)(gyro[0] * sens);
-        gyro[1] = (long)(gyro[1] * sens);
-        gyro[2] = (long)(gyro[2] * sens);
-        dmp_set_gyro_bias(gyro);
-        mpu_get_accel_sens(&accel_sens);
-        accel[0] *= accel_sens;
-        accel[1] *= accel_sens;
-        accel[2] *= accel_sens;
-        dmp_set_accel_bias(accel);
-    }
-}
-unsigned long sensor_timestamp;
-unsigned char more;
-long quat[4];
-#define PITCH_D -1.25
-#define ROLL_D 5
-void ahrs_thread_entry(void* parameter)
-{
-	const double gyroscale = 2000;	
-	
-	Timer4_init();
-	
-	while(1 == mpu_init());
-	//mpu_set_sensor
-	while(1 == mpu_set_sensors(INV_XYZ_GYRO | INV_XYZ_ACCEL));  
-
-	//mpu_configure_fifo
-	while(1 == mpu_configure_fifo(INV_XYZ_GYRO | INV_XYZ_ACCEL));
-
-	//mpu_set_sample_rate
-	while(1 == mpu_set_sample_rate(DEFAULT_MPU_HZ));
-
-	//dmp_load_motion_driver_firmvare
-	while(1 == dmp_load_motion_driver_firmware());
-
-	//dmp_set_orientation
-	while(1 == dmp_set_orientation(inv_orientation_matrix_to_scalar(gyro_orientation)));
-
-	//dmp_enable_feature
-	while(1 == dmp_enable_feature(DMP_FEATURE_6X_LP_QUAT | DMP_FEATURE_TAP |
-		DMP_FEATURE_ANDROID_ORIENT | DMP_FEATURE_SEND_RAW_ACCEL | DMP_FEATURE_SEND_CAL_GYRO |
-		DMP_FEATURE_GYRO_CAL));
-	
-	//dmp_set_fifo_rate
-	while(1 == dmp_set_fifo_rate(DEFAULT_MPU_HZ));
-
-	run_self_test();
-	
-	while(1 == mpu_set_dmp_state(1));
-	
-	rt_kprintf("start mpu6050\n");
-	
-	rt_kprintf("start ahrs\n");
-	
-	last_ahrs=rt_tick_get();
-	
-	while(1)
-	{
-		dmp_read_fifo(gyro, accel, quat, &sensor_timestamp, &sensors, &more);
-        if (sensors & INV_WXYZ_QUAT )
-        {
-            q0 = (double)quat[0] / q30;
-            q1 = (double)quat[1] / q30;
-            q2 = (double)quat[2] / q30;
-            q3 = (double)quat[3] / q30;
-			
-			ahrs.gryo_pitch		= -gyro[0] 	* gyroscale / 32767.0;
-			ahrs.gryo_roll		= -gyro[1] 	* gyroscale / 32767.0;
-			ahrs.gryo_yaw		= -gyro[2] 	* gyroscale / 32767.0;
-			
-			ahrs.degree_roll  = -asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3 +settings.angle_diff_roll;   //+ Pitch_error; // pitch
-            ahrs.degree_pitch = -atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3+settings.angle_diff_pitch ;  //+ Roll_error; // roll
-            ahrs.degree_yaw = atan2(2*(q1*q2 + q0*q3),q0*q0+q1*q1-q2*q2-q3*q3) * 57.3 ;  //+ Yaw_error;
-			
-			last_ahrs=rt_tick_get();
-
-			ahrs.time_span=Timer4_GetSec();
-			
-			if(en_out_ahrs)
-				rt_kprintf("%d,%d,%d		%d\n",
-				(s32)(ahrs.degree_pitch),
-				(s32)(ahrs.degree_roll),
-				(s32)(ahrs.degree_yaw	),
-				(u32)(1.0/ahrs.time_span));
-			rt_event_send(&ahrs_event,AHRS_EVENT_Update);
-		}
-		rt_thread_delay(2);
-	}
-}
 
 static void config_bt()
 {
@@ -569,29 +601,21 @@ void rt_init_thread_entry(void* parameter)
 //	}
 	
 	get_pid();
-	PID_Set_Filt_Alpha(&p_rate_pid	,1.0/(double)RT_TICK_PER_SECOND*2.0,20.0);
-	PID_Set_Filt_Alpha(&r_rate_pid	,1.0/(double)RT_TICK_PER_SECOND*2.0,20.0);
-	PID_Set_Filt_Alpha(&y_rate_pid	,1.0/(double)RT_TICK_PER_SECOND*2.0,20.0);
-	PID_Set_Filt_Alpha(&p_angle_pid	,1.0/(double)RT_TICK_PER_SECOND*2.0,20.0);
-	PID_Set_Filt_Alpha(&r_angle_pid	,1.0/(double)RT_TICK_PER_SECOND*2.0,20.0);
-	PID_Set_Filt_Alpha(&h_pid	,1.0/(double)RT_TICK_PER_SECOND*2.0,20.0);
+	PID_Set_Filt_Alpha(&p_rate_pid	,1.0/166.0,20.0);
+	PID_Set_Filt_Alpha(&r_rate_pid	,1.0/166.0,20.0);
+	PID_Set_Filt_Alpha(&y_rate_pid	,1.0/166.0,20.0);
+	PID_Set_Filt_Alpha(&p_angle_pid	,1.0/166.0,20.0);
+	PID_Set_Filt_Alpha(&r_angle_pid	,1.0/166.0,20.0);
+	PID_Set_Filt_Alpha(&h_pid	,1.0/166.0,20.0);
 	
 	rt_event_init(&ahrs_event,"ahrs_e",RT_IPC_FLAG_FIFO);
-	
-	rt_thread_init(&ahrs_thread,
-					"ahrs",
-					ahrs_thread_entry,
-					RT_NULL,
-                    ahrs_stack,
-					768, 5, 10);
-    rt_thread_startup(&ahrs_thread);
 	
 	rt_thread_init(&control_thread,
 					"control",
 					control_thread_entry,
 					RT_NULL,
                     control_stack,
-					512, 3, 2);
+					768, 3, 2);
     rt_thread_startup(&control_thread);
 	
 	rt_thread_init(&correct_thread,

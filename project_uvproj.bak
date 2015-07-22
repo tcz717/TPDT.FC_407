@@ -359,7 +359,7 @@
             <useXO>0</useXO>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_STDPERIPH_DRIVER</Define>
+              <Define>USE_STDPERIPH_DRIVER,HSE_VALUE=8000000</Define>
               <Undefine></Undefine>
               <IncludePath>.;..\..\rtt\rt-thread-2.0.0_beta\components\dfs;..\..\rtt\rt-thread-2.0.0_beta\components\dfs\filesystems\romfs;..\..\rtt\rt-thread-2.0.0_beta\components\dfs\include;..\..\rtt\rt-thread-2.0.0_beta\components\drivers\include;..\..\rtt\rt-thread-2.0.0_beta\components\finsh;..\..\rtt\rt-thread-2.0.0_beta\components\init;..\..\rtt\rt-thread-2.0.0_beta\include;..\..\rtt\rt-thread-2.0.0_beta\libcpu\arm\common;..\..\rtt\rt-thread-2.0.0_beta\libcpu\arm\cortex-m4;Libraries\CMSIS\Include;Libraries\CMSIS\ST\STM32F4xx\Include;Libraries\STM32F4xx_StdPeriph_Driver\inc;applications;drivers;.\drivers\eMPL</IncludePath>
             </VariousControls>

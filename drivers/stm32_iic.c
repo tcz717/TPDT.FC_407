@@ -16,7 +16,7 @@
 //IIC专用延时函数
 static void I2C_delay(void)
 {
-    volatile int i = 7;
+    volatile int i = 30;
     while (i)
          i--;
 }
