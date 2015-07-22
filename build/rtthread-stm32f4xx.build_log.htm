@@ -4,39 +4,32 @@
 <h1>µVision Build Log</h1>
 <h2>Project:</h2>
 E:\code\TPDT.FC_407\project.uvproj
-Project File Date:  06/24/2015
+Project File Date:  07/22/2015
 
 <h2>Output:</h2>
 Build target 'rt-thread_stm32f4xx'
 compiling application.c...
+applications\application.c(241): warning:  #550-D: variable "gp" was set but never used
+        float gp,gr,gy;
+applications\application.c(241): warning:  #550-D: variable "gr" was set but never used
+        float gp,gr,gy;
+applications\application.c(241): warning:  #550-D: variable "gy" was set but never used
+        float gp,gr,gy;
+applications\application.c(282): warning:  #177-D: label "lost" was declared but never referenced
+  lost:
 applications\application.c(523): warning:  #177-D: function "config_bt" was declared but never referenced
   static void config_bt()
-applications\application.c: 1 warning, 0 errors
+applications\application.c: 5 warnings, 0 errors
 linking...
-Program Size: Code=148376 RO-data=10096 RW-data=784 ZI-data=14360  
+Program Size: Code=148112 RO-data=10096 RW-data=784 ZI-data=14360  
 After Build - User command #1: fromelf --bin .\build\rtthread-stm32f4xx.axf --output rtthread.bin
-".\build\rtthread-stm32f4xx.axf" - 0 Error(s), 1 Warning(s).
+".\build\rtthread-stm32f4xx.axf" - 0 Error(s), 5 Warning(s).
 Load "E:\\code\\TPDT.FC_407\\build\\rtthread-stm32f4xx.axf" 
 Erase Done.
 Programming Done.
 Verify OK.
 Application running ...
-Load "E:\\code\\TPDT.FC_407\\build\\rtthread-stm32f4xx.axf" 
-Erase Done.
-Programming Done.
-Verify OK.
-Application running ...
-Load "E:\\code\\TPDT.FC_407\\build\\rtthread-stm32f4xx.axf" 
-Error: Flash Download failed  -  Target DLL has been cancelled
-Load "E:\\code\\TPDT.FC_407\\build\\rtthread-stm32f4xx.axf" 
-Erase Done.
-Programming Done.
-Verify OK.
-Application running ...
-</pre>
-</body>
-</html>
-warning:  #177-D: variable "tmp" was declared but never referenced
+declared but never referenced
         double tmp;
 drivers\ahrs.c(97): warning:  #177-D: function "toRad" was declared but never referenced
   rt_inline float toRad(float degree)
@@ -94,7 +87,7 @@ compiling finsh_vm.c...
 compiling finsh_token.c...
 compiling components.c...
 linking...
-Program Size: Code=147776 RO-data=10096 RW-data=784 ZI-data=14360  
+Program Size: Code=148376 RO-data=10096 RW-data=784 ZI-data=14360  
 After Build - User command #1: fromelf --bin .\build\rtthread-stm32f4xx.axf --output rtthread.bin
 ".\build\rtthread-stm32f4xx.axf" - 0 Error(s), 7 Warning(s).
 Load "E:\\code\\TPDT.FC_407\\build\\rtthread-stm32f4xx.axf" 

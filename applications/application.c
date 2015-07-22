@@ -251,8 +251,8 @@ u8 get_dmp()
 		gr = - gyro[1] * gyroscale / 32767.0;
 		gy = - gyro[2] * gyroscale / 32767.0;
 		
-		if(abs(gp-ahrs.gryo_pitch)>200.0||abs(gr-ahrs.gryo_roll)>200.0||abs(gy-ahrs.gryo_yaw)>200.0)
-			goto lost;
+//		if(abs(gp-ahrs.gryo_pitch)>200.0||abs(gr-ahrs.gryo_roll)>200.0||abs(gy-ahrs.gryo_yaw)>200.0)
+//			goto lost;
 		
 		mpu_gryo_pitch=MoveAve_WMA(gyro[0], MPU6050_GYR_FIFO[0], 8);
 		mpu_gryo_roll=MoveAve_WMA(gyro[1], MPU6050_GYR_FIFO[1], 8);
