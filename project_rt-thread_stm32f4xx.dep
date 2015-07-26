@@ -1,5 +1,5 @@
 Dependencies for Project 'project', Target 'rt-thread_stm32f4xx': (DO NOT MODIFY !)
-F (applications\application.c)(0x55B34D9A)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I. -I..\..\rtt\rt-thread-2.0.0_beta\components\dfs -I..\..\rtt\rt-thread-2.0.0_beta\components\dfs\filesystems\romfs -I..\..\rtt\rt-thread-2.0.0_beta\components\dfs\include -I..\..\rtt\rt-thread-2.0.0_beta\components\drivers\include -I..\..\rtt\rt-thread-2.0.0_beta\components\finsh -I..\..\rtt\rt-thread-2.0.0_beta\components\init -I..\..\rtt\rt-thread-2.0.0_beta\include -I..\..\rtt\rt-thread-2.0.0_beta\libcpu\arm\common -I..\..\rtt\rt-thread-2.0.0_beta\libcpu\arm\cortex-m4 -ILibraries\CMSIS\Include -ILibraries\CMSIS\ST\STM32F4xx\Include -ILibraries\STM32F4xx_StdPeriph_Driver\inc -Iapplications -Idrivers -I.\drivers\eMPL-I D:\Keil_v5\ARM\RV31\INC-I D:\Keil_v5\ARM\PACK\ARM\CMSIS\3.20.4\CMSIS\Include-I D:\Keil_v5\ARM\Inc\ST\STM32F4xx-DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DHSE_VALUE="8000000" -o .\build\application.o --omf_browse .\build\application.crf --depend .\build\application.d)
+F (applications\application.c)(0x55B46171)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I. -I..\..\rtt\rt-thread-2.0.0_beta\components\dfs -I..\..\rtt\rt-thread-2.0.0_beta\components\dfs\filesystems\romfs -I..\..\rtt\rt-thread-2.0.0_beta\components\dfs\include -I..\..\rtt\rt-thread-2.0.0_beta\components\drivers\include -I..\..\rtt\rt-thread-2.0.0_beta\components\finsh -I..\..\rtt\rt-thread-2.0.0_beta\components\init -I..\..\rtt\rt-thread-2.0.0_beta\include -I..\..\rtt\rt-thread-2.0.0_beta\libcpu\arm\common -I..\..\rtt\rt-thread-2.0.0_beta\libcpu\arm\cortex-m4 -ILibraries\CMSIS\Include -ILibraries\CMSIS\ST\STM32F4xx\Include -ILibraries\STM32F4xx_StdPeriph_Driver\inc -Iapplications -Idrivers -I.\drivers\eMPL-I D:\Keil_v5\ARM\RV31\INC-I D:\Keil_v5\ARM\PACK\ARM\CMSIS\3.20.4\CMSIS\Include-I D:\Keil_v5\ARM\Inc\ST\STM32F4xx-DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DHSE_VALUE="8000000" -o .\build\application.o --omf_browse .\build\application.crf --depend .\build\application.d)
 I (drivers\board.h)(0x55817F30)
 I (Libraries\CMSIS\ST\STM32F4xx\Include\stm32f4xx.h)(0x53DB118C)
 I (Libraries\CMSIS\Include\core_cm4.h)(0x53DB118C)
@@ -75,6 +75,7 @@ I (drivers\stm32_iic.h)(0x55696F2B)
 I (.\drivers\eMPL\inv_mpu_dmp_motion_driver.h)(0x52332729)
 I (.\drivers\eMPL\inv_mpu.h)(0x51B98E87)
 I (D:\Keil_v5\ARM\ARMCC\include\math.h)(0x52FDD27E)
+I (drivers\hmc5883.h)(0x55B46172)
 I (.\sonar.h)(0x55AF754F)
 I (..\..\rtt\rt-thread-2.0.0_beta\components\dfs\include\dfs_posix.h)(0x53DB118C)
 I (..\..\rtt\rt-thread-2.0.0_beta\components\dfs\include\dfs_file.h)(0x53DB118C)
@@ -833,6 +834,63 @@ I (..\..\rtt\rt-thread-2.0.0_beta\components\drivers\include\drivers/spi_flash_w
 I (..\..\rtt\rt-thread-2.0.0_beta\components\drivers\include\drivers/i2c.h)(0x53DB118C)
 I (..\..\rtt\rt-thread-2.0.0_beta\components\drivers\include\drivers/i2c_dev.h)(0x53DB118C)
 I (drivers\PWM.h)(0x55852CA0)
+F (.\drivers\hmc5883.c)(0x55B489DE)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I. -I..\..\rtt\rt-thread-2.0.0_beta\components\dfs -I..\..\rtt\rt-thread-2.0.0_beta\components\dfs\filesystems\romfs -I..\..\rtt\rt-thread-2.0.0_beta\components\dfs\include -I..\..\rtt\rt-thread-2.0.0_beta\components\drivers\include -I..\..\rtt\rt-thread-2.0.0_beta\components\finsh -I..\..\rtt\rt-thread-2.0.0_beta\components\init -I..\..\rtt\rt-thread-2.0.0_beta\include -I..\..\rtt\rt-thread-2.0.0_beta\libcpu\arm\common -I..\..\rtt\rt-thread-2.0.0_beta\libcpu\arm\cortex-m4 -ILibraries\CMSIS\Include -ILibraries\CMSIS\ST\STM32F4xx\Include -ILibraries\STM32F4xx_StdPeriph_Driver\inc -Iapplications -Idrivers -I.\drivers\eMPL-I D:\Keil_v5\ARM\RV31\INC-I D:\Keil_v5\ARM\PACK\ARM\CMSIS\3.20.4\CMSIS\Include-I D:\Keil_v5\ARM\Inc\ST\STM32F4xx-DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DHSE_VALUE="8000000" -o .\build\hmc5883.o --omf_browse .\build\hmc5883.crf --depend .\build\hmc5883.d)
+I (drivers\hmc5883.h)(0x55B46172)
+I (Libraries\CMSIS\ST\STM32F4xx\Include\stm32f4xx.h)(0x53DB118C)
+I (Libraries\CMSIS\Include\core_cm4.h)(0x53DB118C)
+I (D:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x52FDD27E)
+I (Libraries\CMSIS\Include\core_cmInstr.h)(0x53DB118C)
+I (Libraries\CMSIS\Include\core_cmFunc.h)(0x53DB118C)
+I (Libraries\CMSIS\Include\core_cm4_simd.h)(0x53DB118C)
+I (Libraries\CMSIS\ST\STM32F4xx\Include\system_stm32f4xx.h)(0x53DB118C)
+I (drivers\stm32f4xx_conf.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_adc.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_can.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_crc.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_cryp.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_dac.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_dbgmcu.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_dcmi.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_dma.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_exti.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_flash.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_fsmc.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_hash.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_gpio.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_i2c.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_iwdg.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_pwr.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_rcc.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_rng.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_rtc.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_sdio.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_spi.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_syscfg.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_tim.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_usart.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\stm32f4xx_wwdg.h)(0x53DB118C)
+I (Libraries\STM32F4xx_StdPeriph_Driver\inc\misc.h)(0x53DB118C)
+I (D:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x52FDD27E)
+I (D:\Keil_v5\ARM\ARMCC\include\math.h)(0x52FDD27E)
+I (D:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x52FDD27E)
+I (drivers\board.h)(0x55817F30)
+I (..\..\rtt\rt-thread-2.0.0_beta\include\rtthread.h)(0x53DB118C)
+I (.\rtconfig.h)(0x55AF3898)
+I (..\..\rtt\rt-thread-2.0.0_beta\include\rtdebug.h)(0x53DB118C)
+I (..\..\rtt\rt-thread-2.0.0_beta\include\rtdef.h)(0x53DB118C)
+I (D:\Keil_v5\ARM\ARMCC\include\stdarg.h)(0x52FDD27E)
+I (..\..\rtt\rt-thread-2.0.0_beta\include\rtservice.h)(0x53DB118C)
+I (..\..\rtt\rt-thread-2.0.0_beta\include\rtm.h)(0x53DB118C)
+I (..\..\rtt\rt-thread-2.0.0_beta\components\init\components.h)(0x53DB118C)
+I (..\..\rtt\rt-thread-2.0.0_beta\components\finsh\finsh.h)(0x53DB118C)
+I (D:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x52FDD27E)
+I (D:\Keil_v5\ARM\ARMCC\include\string.h)(0x52FDD27E)
+I (..\..\rtt\rt-thread-2.0.0_beta\components\finsh\shell.h)(0x53DB118C)
+I (..\..\rtt\rt-thread-2.0.0_beta\components\dfs\include\dfs_init.h)(0x53DB118C)
+I (..\..\rtt\rt-thread-2.0.0_beta\components\dfs\include\dfs_fs.h)(0x53DB118C)
+I (..\..\rtt\rt-thread-2.0.0_beta\components\dfs\include\dfs_def.h)(0x53DB118C)
+I (..\..\rtt\rt-thread-2.0.0_beta\components\dfs\include\dfs_elm.h)(0x53DB118C)
+I (..\..\rtt\rt-thread-2.0.0_beta\components\dfs\filesystems\romfs\dfs_romfs.h)(0x53DB118C)
 F (Libraries\CMSIS\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c)(0x55AB4606)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I. -I..\..\rtt\rt-thread-2.0.0_beta\components\dfs -I..\..\rtt\rt-thread-2.0.0_beta\components\dfs\filesystems\romfs -I..\..\rtt\rt-thread-2.0.0_beta\components\dfs\include -I..\..\rtt\rt-thread-2.0.0_beta\components\drivers\include -I..\..\rtt\rt-thread-2.0.0_beta\components\finsh -I..\..\rtt\rt-thread-2.0.0_beta\components\init -I..\..\rtt\rt-thread-2.0.0_beta\include -I..\..\rtt\rt-thread-2.0.0_beta\libcpu\arm\common -I..\..\rtt\rt-thread-2.0.0_beta\libcpu\arm\cortex-m4 -ILibraries\CMSIS\Include -ILibraries\CMSIS\ST\STM32F4xx\Include -ILibraries\STM32F4xx_StdPeriph_Driver\inc -Iapplications -Idrivers -I.\drivers\eMPL-I D:\Keil_v5\ARM\RV31\INC-I D:\Keil_v5\ARM\PACK\ARM\CMSIS\3.20.4\CMSIS\Include-I D:\Keil_v5\ARM\Inc\ST\STM32F4xx-DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DHSE_VALUE="8000000" -o .\build\system_stm32f4xx.o --omf_browse .\build\system_stm32f4xx.crf --depend .\build\system_stm32f4xx.d)
 I (Libraries\CMSIS\ST\STM32F4xx\Include\stm32f4xx.h)(0x53DB118C)
 I (Libraries\CMSIS\Include\core_cm4.h)(0x53DB118C)

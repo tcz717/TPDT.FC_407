@@ -38,6 +38,7 @@
 #include "inv_mpu_dmp_motion_driver.h"
 #include "inv_mpu.h"
 #include "math.h"
+#include "hmc5883.h"
 //#include "car_config.h"
 #include "sonar.h"
 //#include "IIC_OLED.h"
@@ -405,6 +406,7 @@ void control_thread_entry(void* parameter)
 			take_off=1;
 		}
 		
+		HMC5883_DataDeal();
 		if(get_dmp()&&balence)
 		{
 			if(throttle>60&&abs(ahrs.degree_pitch)<40&&abs(ahrs.degree_roll)<40)
@@ -639,6 +641,7 @@ void rt_init_thread_entry(void* parameter)
     rt_thread_startup(&correct_thread);
 	
 	sonar_init();
+	HMC5983_Init();
 	
 	LED1(5);
 }

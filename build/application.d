@@ -76,6 +76,7 @@
 .\build\application.o: .\drivers\eMPL\inv_mpu_dmp_motion_driver.h
 .\build\application.o: .\drivers\eMPL\inv_mpu.h
 .\build\application.o: D:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+.\build\application.o: drivers\hmc5883.h
 .\build\application.o: .\sonar.h
 .\build\application.o: ..\..\rtt\rt-thread-2.0.0_beta\components\dfs\include\dfs_posix.h
 .\build\application.o: ..\..\rtt\rt-thread-2.0.0_beta\components\dfs\include\dfs_file.h

@@ -499,6 +499,11 @@
               <FileType>1</FileType>
               <FilePath>.\drivers\sonar.c</FilePath>
             </File>
+            <File>
+              <FileName>hmc5883.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\hmc5883.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

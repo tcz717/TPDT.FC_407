@@ -17,6 +17,7 @@
 ".\build\inv_mpu.o"
 ".\build\inv_mpu_dmp_motion_driver.o"
 ".\build\sonar.o"
+".\build\hmc5883.o"
 ".\build\system_stm32f4xx.o"
 ".\build\misc.o"
 ".\build\stm32f4xx_adc.o"
