@@ -494,6 +494,11 @@
               <FileType>1</FileType>
               <FilePath>.\drivers\eMPL\inv_mpu_dmp_motion_driver.c</FilePath>
             </File>
+            <File>
+              <FileName>sonar.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\sonar.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

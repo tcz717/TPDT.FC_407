@@ -208,7 +208,7 @@ FINSH_FUNCTION_EXPORT(set_height, set the value of pid in yaw)
 
 void set_pwm()
 {
-	settings.pwm_init_mode=!settings.pwm_init_mode;
+	settings.pwm_init_mode=settings.pwm_init_mode?0:0xAF;
 	
 	save_settings(&settings,"/setting");
 	

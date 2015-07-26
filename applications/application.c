@@ -238,7 +238,6 @@ static u16 dmp_retry=0;
 extern volatile int16_t MPU6050_GYR_FIFO[3][256];
 u8 get_dmp()
 {
-	float gp,gr,gy;
 	dmp_read_fifo(gyro, accel, quat, &sensor_timestamp, &sensors, &more);
 	if (sensors & INV_WXYZ_QUAT )
 	{
@@ -246,13 +245,6 @@ u8 get_dmp()
 		q1 = (double)quat[1] / q30;
 		q2 = (double)quat[2] / q30;
 		q3 = (double)quat[3] / q30;
-		
-		gp = - gyro[0] * gyroscale / 32767.0;
-		gr = - gyro[1] * gyroscale / 32767.0;
-		gy = - gyro[2] * gyroscale / 32767.0;
-		
-//		if(abs(gp-ahrs.gryo_pitch)>200.0||abs(gr-ahrs.gryo_roll)>200.0||abs(gy-ahrs.gryo_yaw)>200.0)
-//			goto lost;
 		
 		mpu_gryo_pitch=MoveAve_WMA(gyro[0], MPU6050_GYR_FIFO[0], 8);
 		mpu_gryo_roll=MoveAve_WMA(gyro[1], MPU6050_GYR_FIFO[1], 8);
@@ -318,7 +310,6 @@ void correct_gryo()
 	
 	rt_kprintf("sensor correct finish.\n");
 }
-
 void control_thread_entry(void* parameter)
 {
 	u16 throttle=0;
@@ -326,6 +317,7 @@ void control_thread_entry(void* parameter)
 	double roll=0;
 	double yaw=0;
 	u8 i;
+	u8 take_off=0;
 	
 	p_rate_pid.expect=0;
 	r_rate_pid.expect=0;
@@ -410,12 +402,30 @@ void control_thread_entry(void* parameter)
 			p_rate_pid.iv=0;
 			r_rate_pid.iv=0;
 			y_rate_pid.iv=0;
+			take_off=1;
 		}
 		
 		if(get_dmp()&&balence)
 		{
 			if(throttle>60&&abs(ahrs.degree_pitch)<40&&abs(ahrs.degree_roll)<40)
 			{
+				if(PWM5_Time<1200&&PWM5_Time>800&&sonar_state)
+				{
+					if(rt_sem_take(&sonar_sem,RT_WAITING_NO)==RT_EOK)
+					{
+						PID_SetTarget(&h_pid,50);
+						PID_xUpdate(&h_pid,sonar_h);
+						h_pid.out=RangeValue(h_pid.out,-300,300);
+					}
+					LED4(4);
+					throttle=500;
+				}
+				else
+				{
+					h_pid.out=0;
+					LED4(0);
+				}
+				
 				PID_xUpdate(&p_angle_pid	,ahrs.degree_pitch);
 				PID_SetTarget(&p_rate_pid,-RangeValue(p_angle_pid.out,-80,80));
 				PID_xUpdate(&p_rate_pid	,ahrs.gryo_pitch);
@@ -426,14 +436,16 @@ void control_thread_entry(void* parameter)
 				
 				PID_xUpdate(&y_rate_pid		,ahrs.gryo_yaw);
 				
-				Motor_Set1(throttle - p_rate_pid.out - r_rate_pid.out + y_rate_pid.out);
-				Motor_Set2(throttle - p_rate_pid.out + r_rate_pid.out - y_rate_pid.out);
-				Motor_Set3(throttle + p_rate_pid.out - r_rate_pid.out - y_rate_pid.out);
-				Motor_Set4(throttle + p_rate_pid.out + r_rate_pid.out + y_rate_pid.out);
+				Motor_Set1(throttle - p_rate_pid.out - r_rate_pid.out + y_rate_pid.out - h_pid.out);
+				Motor_Set2(throttle - p_rate_pid.out + r_rate_pid.out - y_rate_pid.out - h_pid.out);
+				Motor_Set3(throttle + p_rate_pid.out - r_rate_pid.out - y_rate_pid.out - h_pid.out);
+				Motor_Set4(throttle + p_rate_pid.out + r_rate_pid.out + y_rate_pid.out - h_pid.out);
 			}
 			else
 				Motor_Set(60,60,60,60);
 		}
+		else
+			LED4(0);
 		
 		if(PWM5_Time>1700)
 		{
@@ -606,7 +618,7 @@ void rt_init_thread_entry(void* parameter)
 	PID_Set_Filt_Alpha(&y_rate_pid	,1.0/166.0,20.0);
 	PID_Set_Filt_Alpha(&p_angle_pid	,1.0/166.0,20.0);
 	PID_Set_Filt_Alpha(&r_angle_pid	,1.0/166.0,20.0);
-	PID_Set_Filt_Alpha(&h_pid	,1.0/166.0,20.0);
+	PID_Set_Filt_Alpha(&h_pid	,1.0/60.0,20.0);
 	
 	rt_event_init(&ahrs_event,"ahrs_e",RT_IPC_FLAG_FIFO);
 	
@@ -626,7 +638,7 @@ void rt_init_thread_entry(void* parameter)
 					768, 12, 1);
     rt_thread_startup(&correct_thread);
 	
-//	sonar_init();
+	sonar_init();
 	
 	LED1(5);
 }

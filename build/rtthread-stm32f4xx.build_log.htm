@@ -8,32 +8,39 @@ Project File Date:  07/22/2015
 
 <h2>Output:</h2>
 Build target 'rt-thread_stm32f4xx'
-compiling application.c...
-applications\application.c(241): warning:  #550-D: variable "gp" was set but never used
-        float gp,gr,gy;
-applications\application.c(241): warning:  #550-D: variable "gr" was set but never used
-        float gp,gr,gy;
-applications\application.c(241): warning:  #550-D: variable "gy" was set but never used
-        float gp,gr,gy;
-applications\application.c(282): warning:  #177-D: label "lost" was declared but never referenced
-  lost:
-applications\application.c(523): warning:  #177-D: function "config_bt" was declared but never referenced
-  static void config_bt()
-applications\application.c: 5 warnings, 0 errors
 linking...
-Program Size: Code=148112 RO-data=10096 RW-data=784 ZI-data=14360  
+Program Size: Code=148864 RO-data=10096 RW-data=796 ZI-data=15036  
 After Build - User command #1: fromelf --bin .\build\rtthread-stm32f4xx.axf --output rtthread.bin
-".\build\rtthread-stm32f4xx.axf" - 0 Error(s), 5 Warning(s).
+".\build\rtthread-stm32f4xx.axf" - 0 Error(s), 0 Warning(s).
+</pre>
+</body>
+</html>
+application.c(535): warning:  #177-D: function "config_bt" was declared but never referenced
+  static void config_bt()
+applications\application.c: 3 warnings, 0 errors
+linking...
+Program Size: Code=148864 RO-data=10096 RW-data=796 ZI-data=15036  
+After Build - User command #1: fromelf --bin .\build\rtthread-stm32f4xx.axf --output rtthread.bin
+".\build\rtthread-stm32f4xx.axf" - 0 Error(s), 3 Warning(s).
 Load "E:\\code\\TPDT.FC_407\\build\\rtthread-stm32f4xx.axf" 
 Erase Done.
 Programming Done.
 Verify OK.
 Application running ...
-declared but never referenced
-        double tmp;
-drivers\ahrs.c(97): warning:  #177-D: function "toRad" was declared but never referenced
-  rt_inline float toRad(float degree)
-drivers\ahrs.c: 6 warnings, 0 errors
+lication running ...
+\\build\\rtthread-stm32f4xx.axf" 
+Error: Flash Download failed  -  Target DLL has been cancelled
+Load "E:\\code\\TPDT.FC_407\\build\\rtthread-stm32f4xx.axf" 
+Erase Failed!
+Internal DLL Error
+Internal command error
+Error: Flash Download failed  -  "Cortex-M4"
+Load "E:\\code\\TPDT.FC_407\\build\\rtthread-stm32f4xx.axf" 
+Erase Done.
+Programming Done.
+Verify OK.
+Application running ...
+ 6 warnings, 0 errors
 compiling board.c...
 compiling led.c...
 compiling serial.c...
