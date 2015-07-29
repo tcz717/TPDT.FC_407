@@ -72,13 +72,13 @@ static rt_uint8_t led_stack[ 256 ];
 static struct rt_thread led_thread;
 
 ALIGN(RT_ALIGN_SIZE)
-static rt_uint8_t control_stack[ 768 ];
+static rt_uint8_t control_stack[ 1024 ];
 static struct rt_thread control_thread;
 
 static struct rt_event ahrs_event;
 
 ALIGN(RT_ALIGN_SIZE)
-static rt_uint8_t correct_stack[ 768 ];
+static rt_uint8_t correct_stack[ 1024 ];
 static struct rt_thread correct_thread;
 
 u8 led_period[4];
@@ -257,7 +257,8 @@ u8 get_dmp()
 		
 		ahrs.degree_roll  = -asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3 +settings.angle_diff_roll;   //+ Pitch_error; // pitch
 		ahrs.degree_pitch = -atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3+settings.angle_diff_pitch ;  //+ Roll_error; // roll
-		ahrs.degree_yaw = atan2(2*(q1*q2 + q0*q3),q0*q0+q1*q1-q2*q2-q3*q3) * 57.3 ;  //+ Yaw_error;
+		if(!has_hmc5883)
+			ahrs.degree_yaw = atan2(2*(q1*q2 + q0*q3),q0*q0+q1*q1-q2*q2-q3*q3) * 57.3 ;  //+ Yaw_error;
 
 		ahrs.time_span=Timer4_GetSec();
 		
@@ -317,6 +318,8 @@ void control_thread_entry(void* parameter)
 	double pitch=0;
 	double roll=0;
 	double yaw=0;
+	double yaw_inc=0;
+	double yaw_exp=0;
 	u8 i;
 	u8 take_off=0;
 	
@@ -327,7 +330,6 @@ void control_thread_entry(void* parameter)
 	r_angle_pid.expect=0;
 	
 	LED2(5);
-	dmp_init();
 	for(i=0;i<15;i++)
 	{
 		u8 j;
@@ -375,15 +377,28 @@ void control_thread_entry(void* parameter)
 			}	
 			if(PWM4_Time<=settings.yaw_max&&PWM4_Time>=settings.yaw_min)
 			{
-				yaw	=MoveAve_WMA(PWM4_Time,yaw_ctl,16)	-	settings.yaw_mid;
-				if(yaw>5)
-					PID_SetTarget(&y_rate_pid,-yaw
-											/(double)(settings.yaw_max	-	settings.yaw_mid)*100.0);
-				else if(yaw<-5)
-					PID_SetTarget(&y_rate_pid,-yaw
-											/(double)(settings.yaw_mid	-	settings.yaw_min)*100.0);
+				yaw_inc	=MoveAve_WMA(PWM4_Time,yaw_ctl,16)	-	settings.yaw_mid;
+				if(has_hmc5883)
+				{
+					if(yaw_inc>5)
+						yaw_exp-=yaw_inc/(double)(settings.yaw_max	-	settings.yaw_mid)*0.4;
+					else if(yaw_inc<-5)
+						yaw_exp-=yaw_inc/(double)(settings.yaw_mid	-	settings.yaw_min)*0.4;
+					if(yaw_exp>360.0)yaw_exp-=360.0;
+					else if(yaw_exp<0.0)yaw_exp+=360.0;
+					PID_SetTarget(&y_angle_pid,0);
+				}
 				else
-					PID_SetTarget(&y_rate_pid,0);
+				{
+					if(yaw>5)
+						PID_SetTarget(&y_rate_pid,-yaw_inc
+												/(double)(settings.yaw_max	-	settings.yaw_mid)*100.0);
+					else if(yaw<-5)
+						PID_SetTarget(&y_rate_pid,-yaw_inc
+												/(double)(settings.yaw_mid	-	settings.yaw_min)*100.0);
+					else
+						PID_SetTarget(&y_rate_pid,0);
+				}
 			}	
 			if(!balence)
 				Motor_Set(throttle,throttle,throttle,throttle);
@@ -404,9 +419,9 @@ void control_thread_entry(void* parameter)
 			r_rate_pid.iv=0;
 			y_rate_pid.iv=0;
 			take_off=1;
+			yaw_exp=ahrs.degree_yaw;
 		}
 		
-		HMC5883_DataDeal();
 		if(get_dmp()&&balence)
 		{
 			if(throttle>60&&abs(ahrs.degree_pitch)<40&&abs(ahrs.degree_roll)<40)
@@ -417,7 +432,7 @@ void control_thread_entry(void* parameter)
 					{
 						PID_SetTarget(&h_pid,50);
 						PID_xUpdate(&h_pid,sonar_h);
-						h_pid.out=RangeValue(h_pid.out,-300,300);
+						h_pid.out=RangeValue(h_pid.out,-200,200);
 					}
 					LED4(4);
 					throttle=500;
@@ -436,6 +451,17 @@ void control_thread_entry(void* parameter)
 				PID_SetTarget(&r_rate_pid,-RangeValue(r_angle_pid.out,-80,80));
 				PID_xUpdate(&r_rate_pid	,ahrs.gryo_roll);
 				
+				if(has_hmc5883)
+				{
+					if(rt_sem_take(&hmc5883_sem,RT_WAITING_NO)==RT_EOK)
+					{
+						yaw=ahrs.degree_yaw-yaw_exp;
+						if(yaw>180.0)yaw-=360.0;
+						if(yaw<-180.0)yaw+=360.0;
+						PID_xUpdate(&y_angle_pid	,yaw);
+						PID_SetTarget(&y_rate_pid,-RangeValue(y_angle_pid.out,-100,100));
+					}
+				}
 				PID_xUpdate(&y_rate_pid		,ahrs.gryo_yaw);
 				
 				Motor_Set1(throttle - p_rate_pid.out - r_rate_pid.out + y_rate_pid.out - h_pid.out);
@@ -557,6 +583,10 @@ void rt_init_thread_entry(void* parameter)
     i2cInit();  
 	rt_hw_spi2_init();
 	
+	dmp_init();
+	sonar_init();
+	HMC5983_Init();
+	
 	//config_bt();
 	
 	rt_thread_init(&led_thread,
@@ -620,7 +650,8 @@ void rt_init_thread_entry(void* parameter)
 	PID_Set_Filt_Alpha(&y_rate_pid	,1.0/166.0,20.0);
 	PID_Set_Filt_Alpha(&p_angle_pid	,1.0/166.0,20.0);
 	PID_Set_Filt_Alpha(&r_angle_pid	,1.0/166.0,20.0);
-	PID_Set_Filt_Alpha(&h_pid	,1.0/60.0,20.0);
+	PID_Set_Filt_Alpha(&y_angle_pid	,1.0/75.0,20.0);
+	PID_Set_Filt_Alpha(&h_pid		,1.0/60.0,20.0);
 	
 	rt_event_init(&ahrs_event,"ahrs_e",RT_IPC_FLAG_FIFO);
 	
@@ -629,7 +660,7 @@ void rt_init_thread_entry(void* parameter)
 					control_thread_entry,
 					RT_NULL,
                     control_stack,
-					768, 3, 2);
+					1024, 3, 2);
     rt_thread_startup(&control_thread);
 	
 	rt_thread_init(&correct_thread,
@@ -637,11 +668,8 @@ void rt_init_thread_entry(void* parameter)
 					correct_thread_entry,
 					RT_NULL,
                     correct_stack,
-					768, 12, 1);
+					1024, 12, 1);
     rt_thread_startup(&correct_thread);
-	
-	sonar_init();
-	HMC5983_Init();
 	
 	LED1(5);
 }
@@ -652,7 +680,7 @@ int rt_application_init()
 
     tid = rt_thread_create("init",
         rt_init_thread_entry, RT_NULL,
-        2048, RT_THREAD_PRIORITY_MAX/3, 20);
+        2048, 1, 20);
 
     if (tid != RT_NULL)
         rt_thread_startup(tid);

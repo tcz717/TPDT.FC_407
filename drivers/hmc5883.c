@@ -2,10 +2,7 @@
 #include <stdio.h>
 #include <math.h>  
 #include <stdlib.h>
-#include <board.h>
-#include <rtthread.h>
-#include <components.h>
-
+#include "ahrs.h"
 
 //HMC5983µÄIICÐ´µØÖ·
 #define   SlaveAddress    0x3c           
@@ -13,6 +10,8 @@
 #define	SDA2_Pin GPIO_Pin_11
 #define	SCL2_Pin GPIO_Pin_10
 #define delay_us(i) I2C_delay()
+#define SAMPLE_COUNT 6
+#define yaw_a 0.9
  
 #define   IIC_SDA_1     GPIOB->BSRRL = SDA2_Pin     
 #define   IIC_SDA_0     GPIOB->BSRRH  = SDA2_Pin    
@@ -22,13 +21,13 @@
   
 
  
-int Xmax,Xmin,Ymax,Ymin,Zmax,Zmin;     //X¡¢Y ¡¢Z µÄ×îÐ¡ÖµºÍ×î´óÖµ
+int Xmax_x,Xmin,Ymax_x,Ymin,Zmax_x,Zmin;     //X¡¢Y ¡¢Z µÄ×îÐ¡ÖµºÍ×î´óÖµ
 int magOffsetX,magOffsetY,magOffsetZ;  //X¡¢Y ¡¢Z  µÄÆ«ÒÆÁ¿
 u8 BUF[6]={0,0,0,0,0,0};               //ÓÃÓÚ´æ·Å¶ÁÈ¡µÄX¡¢Y ¡¢Z Öµ
-float angle;                          //½Ç¶ÈÖµ
+float mag_angle;                          //½Ç¶ÈÖµ
 int calThreshold=1;                    //Æ«ÒÆÁ¿±È½ÏÖµ
 
-int x=0,y=0,z=0;
+int mag_x=0,mag_y=0,mag_z=0;
 
 static void I2C_delay(void)
 {
@@ -163,7 +162,7 @@ void IIC_Send_Byte(u8 txd)          //IIC·¢ËÍ8Î»º¯Êý
 	IIC_SCL_0;    //SCLÎªµÍ
 	for (t = 0; t < 8; t++)
 	{
-// 		IIC_SDA = (txd&0x80) >> 7;
+// 		IIC_SDA = (tmag_xd&0mag_x80) >> 7;
         if(txd&0x80)
         {
             IIC_SDA_1;
@@ -273,105 +272,144 @@ void Multiple_read_HMC5983(u8*BUF)         //HMC5983 ¶ÁÈ¡Ò»×éÊý¾Ý¡£¶ÁÈ¡µÄÖµÎª X¡
 
 void CollectDataItem(int magX, int magY, int magZ)     //ÓÃÓÚÐ£×¼HMC5983Ê±ÓÃ¡£ Ð£×¼µÄ·½·¨ÊÇÍ¨¹ý°Ñ´Å¸ÐÓ¦Æ÷Ô­µØË®Æ½×ª¶¯2È¦¡£
 {
-	if(magX > Xmax)       //µÃµ½ XµÄ×î´óÖµ ºÍ×îÐ¡Öµ 
-		Xmax = magX;
+	if(magX > Xmax_x)       //µÃµ½ XµÄ×î´óÖµ ºÍ×îÐ¡Öµ 
+		Xmax_x = magX;
 	if(magX < Xmin)
 		Xmin = magX;
 		
-	if(magY > Ymax)       //µÃµ½ YµÄ×î´óÖµ ºÍ×îÐ¡Öµ 
-		Ymax = magY;
+	if(magY > Ymax_x)       //µÃµ½ YµÄ×î´óÖµ ºÍ×îÐ¡Öµ 
+		Ymax_x = magY;
 	if (magY < Ymin)
 		Ymin = magY;
 		
-	if(magZ > Zmax)       //µÃµ½ ZµÄ×î´óÖµ ºÍ×îÐ¡Öµ 
-		Zmax = magZ;
+	if(magZ > Zmax_x)       //µÃµ½ ZµÄ×î´óÖµ ºÍ×îÐ¡Öµ 
+		Zmax_x = magZ;
 	if (magZ < Zmin)
 		Zmin = magZ;
 	
-	if(abs(Xmax - Xmin) > calThreshold)            //ÓÃ×î´óÖµ-×îÐ¡Öµ /2 µÃµ½Æ«ÒÆÁ¿
-			magOffsetX = ( Xmax + Xmin) / 2; 
-	if(abs(Ymax - Ymin) > calThreshold)
-			magOffsetY = ( Ymax + Ymin) / 2;
-	if(abs(Zmax - Zmin) > calThreshold)
-			magOffsetZ = ( Zmax + Zmin) / 2;          //Æ«ÒÆÁ¿µÄÓÃ·¨ÊÇ  ÔÚ½Ç¶ÈÔËËãÖÐ¼õÈ¥Æ«ÒÆÁ¿¡£
+	if(abs(Xmax_x - Xmin) > calThreshold)            //ÓÃ×î´óÖµ-×îÐ¡Öµ /2 µÃµ½Æ«ÒÆÁ¿
+			magOffsetX = ( Xmax_x + Xmin) / 2; 
+	if(abs(Ymax_x - Ymin) > calThreshold)
+			magOffsetY = ( Ymax_x + Ymin) / 2;
+	if(abs(Zmax_x - Zmin) > calThreshold)
+			magOffsetZ = ( Zmax_x + Zmin) / 2;          //Æ«ÒÆÁ¿µÄÓÃ·¨ÊÇ  ÔÚ½Ç¶ÈÔËËãÖÐ¼õÈ¥Æ«ÒÆÁ¿¡£
 }
 
+rt_thread_t hmc5883_thread;
+struct rt_semaphore hmc5883_sem;
+rt_bool_t has_hmc5883=RT_FALSE;
+s16 hmc5883_avr[3][SAMPLE_COUNT]={0};
+
+s16 mag;
+FINSH_VAR_EXPORT(mag,finsh_type_short,mag angle of yaw);
+
+void hmc5883_thread_entry(void* parameter)
+{
+	rt_kprintf("start hmc5883\n");
+	
+	while(1)
+	{    
+		u8 status=0;
+		
+		status = Read_HMC5983(0x09);  //¶ÁÈ¡status¼Ä´æÆ÷
+	 
+		if((status & 0x01) == 0x01)   //Êý¾Ý¸üÐÂÍê±Ï
+		{
+			Multiple_read_HMC5983(BUF);
+			
+			mag_x = BUF[0] << 8 | BUF[1]; //Combine MSB and LSB of X Data output register
+			mag_z = BUF[2] << 8 | BUF[3]; //Combine MSB and LSB of Z Data output register
+			mag_y = BUF[4] << 8 | BUF[5]; //Combine MSB and LSB of Y Data output register
+	  
+			
+			if(mag_x>32768)                 //°ÑµÃµ½µÄXYZÖµ½øÐÐ´¦Àí
+				mag_x = -(0xFFFF - mag_x + 1);
+			if(mag_z>32768)
+				mag_z = -(0xFFFF - mag_z + 1);
+			if(mag_y>32768)
+				mag_y = -(0xFFFF - mag_y + 1);	
+			
+			mag_x=MoveAve_WMA(mag_x,hmc5883_avr[0],SAMPLE_COUNT);
+			mag_y=MoveAve_WMA(mag_y,hmc5883_avr[1],SAMPLE_COUNT);
+			mag_z=MoveAve_WMA(mag_z,hmc5883_avr[2],SAMPLE_COUNT);
+			
+			if(mag_x>0&&mag_y>0)
+			{
+				 mag_angle= atan2((double)(mag_y),(double)(mag_x)) * (180 / 3.14159265);
+			}
+			else if(mag_x>0&&mag_y<0)
+			{
+				 mag_angle=360-atan2((double)(-mag_y),(double)(mag_x)) * (180 / 3.14159265);		
+			}
+			else if(mag_x<0&&mag_y<0)
+			{
+				 mag_angle=180+atan2((double)(-mag_y),(double)(-mag_x)) * (180 / 3.14159265);		
+			}
+			else if(mag_x<0&&mag_y>0)
+			{
+				 mag_angle=180-atan2((double)(mag_y),(double)(-mag_x)) * (180 / 3.14159265);		
+			}
+			else if(mag_x==0&&mag_y<0)
+			{
+				 mag_angle=270;		
+			}
+			else if(mag_x==0&&mag_y>0)
+			{
+				 mag_angle=90;		
+			}		 
+			else if(mag_x>0&&mag_y==0)
+			{
+				 mag_angle=0;		
+			}
+			else if(mag_x<0&&mag_y==0)
+			{
+				 mag_angle=180;		
+			}
+			
+			ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0)+(1.0-yaw_a)*mag_angle;
+			mag=(s16)mag_angle;
+			rt_sem_release(&hmc5883_sem);
+		}
+		rt_thread_delay(RT_TICK_PER_SECOND/75);
+	}
+}
   
 //´ÅÁ¦¼Æ³õÊ¼»¯
-void HMC5983_Init(void)          //³õÊ¼»¯HMC5983
+rt_err_t HMC5983_Init(void)          //³õÊ¼»¯HMC5983
 {
+	u8 id;
+	
 	HMC5883_GPIO_Config();
     
 	Write_HMC5983(0x00, 0x78);	 //ÉèÖÃÊä³öÆµÂÊÎª75HZ
  
 	Write_HMC5983(0x02, 0x00);		//Á¬Ðø²âÁ¿Ä£Ê½
 	
-	rt_kprintf("HMC5883:0x%x\n",Read_HMC5983(10));
+	id=Read_HMC5983(10);
+	
+	rt_kprintf("HMC5883:0x%x\n",id);
+	
+	rt_sem_init(&hmc5883_sem,"hmc_s",0,RT_IPC_FLAG_FIFO);
+	
+	if(id!=0x48)
+	{
+		has_hmc5883=RT_FALSE;
+		rt_kprintf("HMC5883 not find\n");
+		return RT_EEMPTY;
+	}
+	
+	hmc5883_thread = rt_thread_create("hmc5883",hmc5883_thread_entry,RT_NULL,768,6,2);
+	
+	if(hmc5883_thread==RT_NULL)
+	{
+		has_hmc5883=RT_FALSE;
+		rt_kprintf("HMC5883 thread no Memory\n");
+		return RT_ENOMEM;
+	}
+	
+	has_hmc5883=RT_TRUE;
+	rt_thread_startup(hmc5883_thread);
+	
+	return RT_EOK;
 }
-
  
- 
-//Êý¾Ý´¦Àí
-void HMC5883_DataDeal(void)
-{
-    u8 status=0;
-    
-    status = Read_HMC5983(0x09);  //¶ÁÈ¡status¼Ä´æÆ÷
- 
-    if((status & 0x01) == 0x01)   //Êý¾Ý¸üÐÂÍê±Ï
-    {
-        Multiple_read_HMC5983(BUF);
-        
-        x = BUF[0] << 8 | BUF[1]; //Combine MSB and LSB of X Data output register
-        z = BUF[2] << 8 | BUF[3]; //Combine MSB and LSB of Z Data output register
-        y = BUF[4] << 8 | BUF[5]; //Combine MSB and LSB of Y Data output register
-  
-        
-        if(x>32768)                 //°ÑµÃµ½µÄXYZÖµ½øÐÐ´¦Àí
-            x = -(0xFFFF - x + 1);
-        if(z>32768)
-            z = -(0xFFFF - z + 1);
-        if(y>32768)
-            y = -(0xFFFF - y + 1);
- 
-//         CollectDataItem(x,y,z);
-//      	x = x + 84;   //Ð£Õý
-//  		y = y + 169;		  
-
-        
-        if(x>0&&y>0)
-        {
-             angle= atan2((double)(y),(double)(x)) * (180 / 3.14159265);
-        }
-        else if(x>0&&y<0)
-        {
-             angle=360-atan2((double)(-y),(double)(x)) * (180 / 3.14159265);		
-        }
-        else if(x<0&&y<0)
-        {
-             angle=180+atan2((double)(-y),(double)(-x)) * (180 / 3.14159265);		
-        }
-        else if(x<0&&y>0)
-        {
-             angle=180-atan2((double)(y),(double)(-x)) * (180 / 3.14159265);		
-        }
-        else if(x==0&&y<0)
-        {
-             angle=270;		
-        }
-        else if(x==0&&y>0)
-        {
-             angle=90;		
-        }		 
-        else if(x>0&&y==0)
-        {
-             angle=0;		
-        }
-        else if(x<0&&y==0)
-        {
-             angle=180;		
-        }
-  
-    }
-}
-

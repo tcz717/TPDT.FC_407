@@ -789,7 +789,7 @@ int mpu_init(void)
         return -1;
 	
 	i2c_read(st.hw->addr, st.reg->who_am_i, 1, data);
-	rt_kprintf("mpu6050 who am i: %d\n",data[0]);
+	rt_kprintf("mpu6050:0x%x\n",data[0]);
 	
 #if defined MPU6050
     /* Check product revision. */

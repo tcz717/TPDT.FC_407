@@ -23,7 +23,7 @@
 /* Using Hook */
 #define RT_USING_HOOK
 
-#define IDLE_THREAD_STACK_SIZE     1280
+#define IDLE_THREAD_STACK_SIZE     1024
 
 /* Using Software Timer */
 /* #define RT_USING_TIMER_SOFT */
