@@ -4,6 +4,7 @@
 #include <rtdevice.h>
 #include <rthw.h>
 #include <rtthread.h>
+#include "spi_flash_w25qxx.h"
 
 #define SPI_FLASH 1
 
@@ -32,7 +33,7 @@ void spi_flash_init(void)
 {
 	rt_spi_bus_attach_device(&spi_flash,"cs_d11","spi2",&flash_cs);
 	
-	w25qxx_init("flash0","cs_d11");
+	w25qxx_init("flash0","cs_d11"); 
 }
 
 rt_err_t spi2_configure(struct rt_spi_device *device, struct rt_spi_configuration *configuration)

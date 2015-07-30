@@ -365,8 +365,20 @@ void hmc5883_thread_entry(void* parameter)
 			{
 				 mag_angle=180;		
 			}
-			
-			ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0)+(1.0-yaw_a)*mag_angle;
+			if(ahrs.degree_yaw-mag_angle>360.0*(1.0-yaw_a))
+			{
+				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0)+(1.0-yaw_a)*(mag_angle+360.0);
+				if(ahrs.degree_yaw>360.0)
+					ahrs.degree_yaw-=360.0;
+			}
+			else if (ahrs.degree_yaw-mag_angle<-360.0*(1.0-yaw_a))
+			{
+				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0)+(1.0-yaw_a)*(mag_angle-360.0);
+				if(ahrs.degree_yaw<0.0)
+					ahrs.degree_yaw+=360.0;
+			}
+			else
+				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0)+(1.0-yaw_a)*mag_angle;
 			mag=(s16)mag_angle;
 			rt_sem_release(&hmc5883_sem);
 		}
