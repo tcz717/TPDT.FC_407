@@ -21,6 +21,7 @@ FINSH_VAR_EXPORT(h,finsh_type_uint,sonar height);
 
 void sonar_thread_entry(void* parameter)
 {
+	extern u8 balence;
 	rt_kprintf("start sonar\n");
 	while(1)
 	{
@@ -36,7 +37,8 @@ void sonar_thread_entry(void* parameter)
 		h=(u16)sonar_h;
 		sonar_state=sonar_h>5.0f&&sonar_h<200.0f;
 		
-		rt_sem_release(&sonar_sem);
+		if(balence)
+			rt_sem_release(&sonar_sem);
 	}
 }
 

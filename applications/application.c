@@ -25,7 +25,7 @@
 #endif
 
 //#include "i2c1.h"
-#include "spi2.h"
+#include "stm32_spi.h"
 #include "bmp085.h"
 #include "MPU6050.h"
 #include "ahrs.h"  
@@ -39,6 +39,7 @@
 #include "inv_mpu.h"
 #include "math.h"
 #include "hmc5883.h"
+#include "adns3080.h"
 //#include "car_config.h"
 #include "sonar.h"
 //#include "IIC_OLED.h"
@@ -582,10 +583,12 @@ void rt_init_thread_entry(void* parameter)
 	//rt_hw_i2c1_init();
     i2cInit();  
 	rt_hw_spi2_init();
+	rt_hw_spi3_init();
 	
 	dmp_init();
 	sonar_init();
 	HMC5983_Init();
+	adns3080_Init();
 	
 	//config_bt();
 	
