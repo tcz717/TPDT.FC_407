@@ -11,7 +11,7 @@
 #define	SCL2_Pin GPIO_Pin_10
 #define delay_us(i) I2C_delay()
 #define SAMPLE_COUNT 6
-#define yaw_a 0.9
+#define yaw_a 0.6
  
 #define   IIC_SDA_1     GPIOB->BSRRL = SDA2_Pin     
 #define   IIC_SDA_0     GPIOB->BSRRH  = SDA2_Pin    
@@ -296,7 +296,6 @@ void CollectDataItem(int magX, int magY, int magZ)     //”√”⁄–£◊ºHMC5983 ±”√°£ –
 }
 
 rt_thread_t hmc5883_thread;
-struct rt_semaphore hmc5883_sem;
 rt_bool_t has_hmc5883=RT_FALSE;
 s16 hmc5883_avr[3][SAMPLE_COUNT]={0};
 
@@ -305,7 +304,6 @@ FINSH_VAR_EXPORT(mag,finsh_type_short,mag angle of yaw);
 
 void hmc5883_thread_entry(void* parameter)
 {
-	extern u8 balence;
 	rt_kprintf("start hmc5883\n");
 	
 	while(1)
@@ -381,8 +379,8 @@ void hmc5883_thread_entry(void* parameter)
 			else
 				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0)+(1.0-yaw_a)*mag_angle;
 			mag=(s16)mag_angle;
-			if(balence)
-				rt_sem_release(&hmc5883_sem);
+			
+			rt_event_send(&ahrs_event,AHRS_EVENT_HMC5883);
 		}
 		rt_thread_delay(RT_TICK_PER_SECOND/75);
 	}
@@ -402,8 +400,6 @@ rt_err_t HMC5983_Init(void)          //≥ı ºªØHMC5983
 	id=Read_HMC5983(10);
 	
 	rt_kprintf("HMC5883:0x%x\n",id);
-	
-	rt_sem_init(&hmc5883_sem,"hmc_s",0,RT_IPC_FLAG_FIFO);
 	
 	if(id!=0x48)
 	{

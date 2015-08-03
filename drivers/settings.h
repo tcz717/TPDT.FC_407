@@ -26,6 +26,16 @@ struct setting_t
 	double yaw_rate_p;
 	double yaw_rate_i;
 	double yaw_rate_d;
+
+	double x_d_p;
+	double x_v_p;
+	double x_v_i;
+	double x_v_d;
+
+	double y_d_p;
+	double y_v_p;
+	double y_v_i;
+	double y_v_d;
 	
 	double h_p;
 	double h_i;
@@ -56,11 +66,13 @@ struct setting_t
 extern struct setting_t settings;
 
 void get_pid(void);
-rt_err_t load_settings(struct setting_t * s,const char * path,
-	PID * p_angle,PID * p_rate,
-	PID * r_angle,PID * r_rate,
-	PID * y_angle,PID * y_rate,
-	PID * h_pid);
+rt_err_t load_settings(struct setting_t * s, const char * path,
+	PID * p_angle, PID * p_rate,
+	PID * r_angle, PID * r_rate,
+	PID * y_angle, PID * y_rate,
+	PID * x_d, PID * x_v,
+	PID * y_d, PID * y_v,
+	PID * h);
 rt_err_t save_settings(struct setting_t * s,const char * path);
 
 #endif

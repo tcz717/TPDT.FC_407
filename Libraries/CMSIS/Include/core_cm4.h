@@ -140,6 +140,9 @@
     #define __FPU_USED         0
 #endif
 
+//#ifdef _MSC_VER /*fix uint32_t for VS2013*/
+//#include <stdint.h>
+//#endif 
 #include <stdint.h>                      /*!< standard types definitions                      */
 #include <core_cmInstr.h>                /*!< Core Instruction Access                         */
 #include <core_cmFunc.h>                 /*!< Core Function Access                            */

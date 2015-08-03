@@ -359,7 +359,7 @@
             <wLevel>0</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
-            <uC99>0</uC99>
+            <uC99>1</uC99>
             <useXO>0</useXO>
             <VariousControls>
               <MiscControls></MiscControls>
@@ -479,11 +479,6 @@
               <FilePath>drivers\sonar.c</FilePath>
             </File>
             <File>
-              <FileName>spi2.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>drivers\spi2.c</FilePath>
-            </File>
-            <File>
               <FileName>stm32_iic.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\stm32_iic.c</FilePath>
@@ -507,6 +502,16 @@
               <FileName>inv_mpu_dmp_motion_driver.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\drivers\eMPL\inv_mpu_dmp_motion_driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>adns3080.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\adns3080.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\stm32_spi.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -21,3 +21,7 @@
 .#*
 *.uvgui.*
 *.uvopt
+*.uvguix.*
+*.vcxproj.*
+*.sdf
+*.opensdf

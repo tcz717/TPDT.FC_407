@@ -8,7 +8,6 @@
 rt_err_t HMC5983_Init(void); 
 extern rt_bool_t has_hmc5883;
 extern float mag_angle;
-extern struct rt_semaphore hmc5883_sem;
 
 #endif 
 

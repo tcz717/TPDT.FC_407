@@ -31,7 +31,6 @@
 
 rt_err_t adns3080_Init(void); 
 extern rt_bool_t has_adns3080;
-extern struct rt_semaphore adns3080_sem;
 extern s32 opx,opy;
 extern s32 optc_dx,optc_dy;
 

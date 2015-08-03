@@ -8,6 +8,7 @@ struct ahrs_t ahrs;
 int16_t mpu_acc_x,mpu_acc_y,mpu_acc_z;
 int16_t mpu_gryo_pitch,mpu_gryo_roll,mpu_gryo_yaw;
 struct rt_semaphore angle_fix_sem;
+struct rt_event ahrs_event;
 
 s16 MoveAve_SMA(volatile int16_t NewData, volatile int16_t *MoveAve_FIFO, u8 SampleNum)
 {

@@ -10,7 +10,6 @@
 ALIGN(RT_ALIGN_SIZE)
 static rt_uint8_t sonar_stack[ 512 ];
 static struct rt_thread sonar_thread;
-struct rt_semaphore sonar_sem;
 
 s16 sonar_avr[SAMPLE_COUNT]={0};
 u8 sonar_state=0;
@@ -21,7 +20,6 @@ FINSH_VAR_EXPORT(h,finsh_type_uint,sonar height);
 
 void sonar_thread_entry(void* parameter)
 {
-	extern u8 balence;
 	rt_kprintf("start sonar\n");
 	while(1)
 	{
@@ -37,8 +35,7 @@ void sonar_thread_entry(void* parameter)
 		h=(u16)sonar_h;
 		sonar_state=sonar_h>5.0f&&sonar_h<200.0f;
 		
-		if(balence)
-			rt_sem_release(&sonar_sem);
+		rt_event_send(&ahrs_event,AHRS_EVENT_SONAR);
 	}
 }
 
@@ -51,8 +48,6 @@ void sonar_init()
 	gpio_init.GPIO_Pin=GPIO_Pin_7;
 	GPIO_Init(GPIOE,&gpio_init);
 	GPIO_ResetBits(GPIOE,GPIO_Pin_7);
-	
-	rt_sem_init(&sonar_sem,"sonar_s",0,RT_IPC_FLAG_FIFO);
 	
 	rt_thread_init(&sonar_thread,
 					"sonar",

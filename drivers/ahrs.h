@@ -10,10 +10,18 @@
 #define MPU6050_ACC_SCALE	8
 #define HALF_SIGNED16		32767
 
+#define AHRS_EVENT_MPU6050	1
+#define AHRS_EVENT_HMC5883	(1 << 2)
+#define AHRS_EVENT_ADNS3080	(1 << 3)
+#define AHRS_EVENT_SONAR	(1 << 4)
+#define AHRS_EVENT_Update 	(1 << 7)
+#define AHRS_EVENT_WRONG 	(1 << 15)
+
 void ahrs_put_mpu6050(s16 * data);
 void ahrs_update(void);
 s16 MoveAve_SMA(volatile int16_t NewData, volatile int16_t *MoveAve_FIFO, u8 SampleNum);
 s16 MoveAve_WMA(volatile int16_t NewData, volatile int16_t *MoveAve_FIFO, u8 SampleNum);
+extern struct rt_event ahrs_event;
 extern struct ahrs_t
 {
 	double acc_x;
