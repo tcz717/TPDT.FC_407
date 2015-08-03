@@ -10,7 +10,7 @@ struct bmp085_data
 {
 	rt_uint32_t temperature;
 	rt_uint32_t  pressure;
-	double height;
+	float height;
 };
 
 rt_err_t bmp085_init(const char * i2c_bus_device_name);

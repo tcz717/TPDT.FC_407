@@ -119,7 +119,7 @@ static volatile Quaternion curq = { 1.0,0.0,0.0,0.0 };
 #define q3 curq.q3
 #define DEFAULT_MPU_HZ  (200)
 #define q30  1073741824.0f
-const double gyroscale = 2000;
+const float gyroscale = 2000;
 unsigned long sensor_timestamp;
 unsigned char more;
 long quat[4];
@@ -222,23 +222,23 @@ u8 get_dmp()
 	dmp_read_fifo(gyro, accel, quat, &sensor_timestamp, &sensors, &more);
 	if (sensors & INV_WXYZ_QUAT)
 	{
-		q0 = (double)quat[0] / q30;
-		q1 = (double)quat[1] / q30;
-		q2 = (double)quat[2] / q30;
-		q3 = (double)quat[3] / q30;
+		q0 = (float)quat[0] / q30;
+		q1 = (float)quat[1] / q30;
+		q2 = (float)quat[2] / q30;
+		q3 = (float)quat[3] / q30;
 
 		mpu_gryo_pitch = MoveAve_WMA(gyro[0], MPU6050_GYR_FIFO[0], 8);
 		mpu_gryo_roll = MoveAve_WMA(gyro[1], MPU6050_GYR_FIFO[1], 8);
 		mpu_gryo_yaw = MoveAve_WMA(gyro[2], MPU6050_GYR_FIFO[2], 8);
 
-		ahrs.gryo_pitch = -mpu_gryo_pitch 	* gyroscale / 32767.0;
-		ahrs.gryo_roll = -mpu_gryo_roll 	* gyroscale / 32767.0;
-		ahrs.gryo_yaw = -mpu_gryo_yaw 	* gyroscale / 32767.0;
+		ahrs.gryo_pitch = -mpu_gryo_pitch 	* gyroscale / 32767.0f;
+		ahrs.gryo_roll = -mpu_gryo_roll 	* gyroscale / 32767.0f;
+		ahrs.gryo_yaw = -mpu_gryo_yaw 	* gyroscale / 32767.0f;
 
-		ahrs.degree_roll = -asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3 + settings.angle_diff_roll;   //+ Pitch_error; // pitch
-		ahrs.degree_pitch = -atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3 + settings.angle_diff_pitch;  //+ Roll_error; // roll
+		ahrs.degree_roll = -asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3f + settings.angle_diff_roll;   //+ Pitch_error; // pitch
+		ahrs.degree_pitch = -atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3f + settings.angle_diff_pitch;  //+ Roll_error; // roll
 		if (!has_hmc5883)
-			ahrs.degree_yaw = atan2(2 * (q1*q2 + q0*q3), q0*q0 + q1*q1 - q2*q2 - q3*q3) * 57.3;  //+ Yaw_error;
+			ahrs.degree_yaw = atan2(2 * (q1*q2 + q0*q3), q0*q0 + q1*q1 - q2*q2 - q3*q3) * 57.3f;  //+ Yaw_error;
 
 		ahrs.time_span = Timer4_GetSec();
 
@@ -247,7 +247,7 @@ u8 get_dmp()
 				(s32)(ahrs.degree_pitch),
 				(s32)(ahrs.degree_roll),
 				(s32)(ahrs.degree_yaw),
-				(u32)(1.0 / ahrs.time_span));
+				(u32)(1.0f / ahrs.time_span));
 		rt_event_send(&ahrs_event, AHRS_EVENT_Update);
 
 		dmp_retry = 0;
@@ -310,13 +310,13 @@ void correct_gryo()
 	rt_kprintf("sensor correct finish.\n");
 }
 u16 throttle = 0;
-double pitch = 0;
-double roll = 0;
-double yaw = 0;
+float pitch = 0;
+float roll = 0;
+float yaw = 0;
 void control_thread_entry(void* parameter)
 {
-	double yaw_inc = 0;
-	double yaw_exp = 0;
+	float yaw_inc = 0;
+	float yaw_exp = 0;
 	u8 i;
 	u8 take_off = 0;
 
@@ -353,10 +353,10 @@ void control_thread_entry(void* parameter)
 			{
 				roll = MoveAve_WMA(PWM1_Time, roll_ctl, 16) - settings.roll_mid;
 				if (roll > 5)
-					PID_SetTarget(&r_angle_pid, -roll / (double)(settings.roll_max - settings.roll_mid)*45.0);
+					PID_SetTarget(&r_angle_pid, -roll / (float)(settings.roll_max - settings.roll_mid)*45.0f);
 				else if (roll < -5)
 					PID_SetTarget(&r_angle_pid, -roll
-						/ (double)(settings.roll_mid - settings.roll_min)*45.0);
+						/ (float)(settings.roll_mid - settings.roll_min)*45.0f);
 				else
 					PID_SetTarget(&r_angle_pid, 0);
 			}
@@ -365,10 +365,10 @@ void control_thread_entry(void* parameter)
 				pitch = MoveAve_WMA(PWM2_Time, pitch_ctl, 16) - settings.pitch_mid;
 				if (pitch > 5)
 					PID_SetTarget(&p_angle_pid, -pitch
-						/ (double)(settings.pitch_max - settings.pitch_mid)*30.0);
+						/ (float)(settings.pitch_max - settings.pitch_mid)*30.0f);
 				else if (pitch < -5)
 					PID_SetTarget(&p_angle_pid, -pitch
-						/ (double)(settings.pitch_mid - settings.pitch_min)*30.0);
+						/ (float)(settings.pitch_mid - settings.pitch_min)*30.0f);
 				else
 					PID_SetTarget(&p_angle_pid, 0);
 			}
@@ -378,21 +378,21 @@ void control_thread_entry(void* parameter)
 				if (has_hmc5883)
 				{
 					if (yaw_inc > 5)
-						yaw_exp -= yaw_inc / (double)(settings.yaw_max - settings.yaw_mid)*0.5;
+						yaw_exp -= yaw_inc / (float)(settings.yaw_max - settings.yaw_mid)*0.5f;
 					else if (yaw_inc < -5)
-						yaw_exp -= yaw_inc / (double)(settings.yaw_mid - settings.yaw_min)*0.5;
-					if (yaw_exp > 360.0)yaw_exp -= 360.0;
-					else if (yaw_exp < 0.0)yaw_exp += 360.0;
+						yaw_exp -= yaw_inc / (float)(settings.yaw_mid - settings.yaw_min)*0.5f;
+					if (yaw_exp > 360.0f)yaw_exp -= 360.0f;
+					else if (yaw_exp < 0.0f)yaw_exp += 360.0f;
 					PID_SetTarget(&y_angle_pid, 0);
 				}
 				else
 				{
 					if (yaw > 5)
 						PID_SetTarget(&y_rate_pid, -yaw_inc
-							/ (double)(settings.yaw_max - settings.yaw_mid)*100.0);
+							/ (float)(settings.yaw_max - settings.yaw_mid)*100.0f);
 					else if (yaw < -5)
 						PID_SetTarget(&y_rate_pid, -yaw_inc
-							/ (double)(settings.yaw_mid - settings.yaw_min)*100.0);
+							/ (float)(settings.yaw_mid - settings.yaw_min)*100.0f);
 					else
 						PID_SetTarget(&y_rate_pid, 0);
 				}
@@ -483,8 +483,8 @@ void control_thread_entry(void* parameter)
 					if (rt_event_recv(&ahrs_event, AHRS_EVENT_HMC5883, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_NO, &dump) == RT_EOK)
 					{
 						yaw = ahrs.degree_yaw - yaw_exp;
-						if (yaw > 180.0)yaw -= 360.0;
-						if (yaw < -180.0)yaw += 360.0;
+						if (yaw > 180.0f)yaw -= 360.0f;
+						if (yaw < -180.0f)yaw += 360.0f;
 						PID_xUpdate(&y_angle_pid, yaw);
 						PID_SetTarget(&y_rate_pid, -RangeValue(y_angle_pid.out, -100, 100));
 					}
@@ -562,15 +562,15 @@ void correct_thread_entry(void* parameter)
 				RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR,
 				RT_WAITING_FOREVER, &e) == RT_EOK)
 			{
-				m1 = MoveAve_SMA(ahrs.degree_pitch*1000.0, mpu1, 255);
-				m2 = MoveAve_SMA(ahrs.degree_roll	*1000.0, mpu2, 255);
-				m3 = MoveAve_SMA(ahrs.degree_yaw	*1000.0, mpu3, 255);
+				m1 = MoveAve_SMA(ahrs.degree_pitch*1000.0f, mpu1, 255);
+				m2 = MoveAve_SMA(ahrs.degree_roll	*1000.0f, mpu2, 255);
+				m3 = MoveAve_SMA(ahrs.degree_yaw	*1000.0f, mpu3, 255);
 			}
 		}
 
-		settings.angle_diff_pitch = -m1 / 1000.0;
-		settings.angle_diff_roll = -m2 / 1000.0;
-		settings.angle_diff_yaw = -m3 / 1000.0;
+		settings.angle_diff_pitch = -m1 / 1000.0f;
+		settings.angle_diff_roll = -m2 / 1000.0f;
+		settings.angle_diff_yaw = -m3 / 1000.0f;
 
 		rt_free(mpu1);
 		rt_free(mpu2);

@@ -6,26 +6,26 @@
 
 typedef struct
 {
-	double p;
-	double i;
-	double d;
-	double input;
-	double expect;
-	double out;
-	double outp;
-	double outi;
-	double outd;
-	double iv;
-	double dv;
-	double filt_alpha;
-	double dt;
+	float p;
+	float i;
+	float d;
+	float input;
+	float expect;
+	float out;
+	float outp;
+	float outi;
+	float outd;
+	float iv;
+	float dv;
+	float filt_alpha;
+	float dt;
 }PID;
 
-void PID_SetTarget(PID*,double value);
-double PID_Update(PID*,double value, double dv);
-double PID_xUpdate(PID* pid,double value);
-double RangeValue(double value,double min,double max);
-void PID_Init(PID*,double p,double i,double d);
-void PID_Set_Filt_Alpha(PID* pid,double dt,double filt_hz);
+void PID_SetTarget(PID*,float value);
+float PID_Update(PID*,float value, float dv);
+float PID_xUpdate(PID* pid,float value);
+float RangeValue(float value,float min,float max);
+void PID_Init(PID*,float p,float i,float d);
+void PID_Set_Filt_Alpha(PID* pid,float dt,float filt_hz);
 
 #endif

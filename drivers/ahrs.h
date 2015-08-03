@@ -24,16 +24,16 @@ s16 MoveAve_WMA(volatile int16_t NewData, volatile int16_t *MoveAve_FIFO, u8 Sam
 extern struct rt_event ahrs_event;
 extern struct ahrs_t
 {
-	double acc_x;
-	double acc_y;
-	double acc_z;
-	double gryo_pitch;
-	double gryo_roll;
-	double gryo_yaw;
-	double degree_pitch;
-	double degree_roll;
-	double degree_yaw;
-	double time_span;
+	float acc_x;
+	float acc_y;
+	float acc_z;
+	float gryo_pitch;
+	float gryo_roll;
+	float gryo_yaw;
+	float degree_pitch;
+	float degree_roll;
+	float degree_yaw;
+	float time_span;
 }ahrs;
 
 typedef struct {
@@ -45,7 +45,7 @@ typedef struct {
 
 extern int16_t mpu_acc_x,mpu_acc_y,mpu_acc_z;
 extern int16_t mpu_gryo_pitch,mpu_gryo_roll,mpu_gryo_yaw;
-extern double MPU6050_Diff[];
+extern float MPU6050_Diff[];
 extern struct rt_semaphore angle_fix_sem;
 
 #endif

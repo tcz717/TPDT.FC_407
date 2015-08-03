@@ -11,7 +11,7 @@
 #define	SCL2_Pin GPIO_Pin_10
 #define delay_us(i) I2C_delay()
 #define SAMPLE_COUNT 6
-#define yaw_a 0.6
+#define yaw_a 0.6f
  
 #define   IIC_SDA_1     GPIOB->BSRRL = SDA2_Pin     
 #define   IIC_SDA_0     GPIOB->BSRRH  = SDA2_Pin    
@@ -334,19 +334,19 @@ void hmc5883_thread_entry(void* parameter)
 			
 			if(mag_x>0&&mag_y>0)
 			{
-				 mag_angle= atan2((double)(mag_y),(double)(mag_x)) * (180 / 3.14159265);
+				 mag_angle= atan2((float)(mag_y),(float)(mag_x)) * (180 / 3.14159265f);
 			}
 			else if(mag_x>0&&mag_y<0)
 			{
-				 mag_angle=360-atan2((double)(-mag_y),(double)(mag_x)) * (180 / 3.14159265);		
+				 mag_angle=360-atan2((float)(-mag_y),(float)(mag_x)) * (180 / 3.14159265f);		
 			}
 			else if(mag_x<0&&mag_y<0)
 			{
-				 mag_angle=180+atan2((double)(-mag_y),(double)(-mag_x)) * (180 / 3.14159265);		
+				 mag_angle=180+atan2((float)(-mag_y),(float)(-mag_x)) * (180 / 3.14159265f);		
 			}
 			else if(mag_x<0&&mag_y>0)
 			{
-				 mag_angle=180-atan2((double)(mag_y),(double)(-mag_x)) * (180 / 3.14159265);		
+				 mag_angle=180-atan2((float)(mag_y),(float)(-mag_x)) * (180 / 3.14159265f);		
 			}
 			else if(mag_x==0&&mag_y<0)
 			{
@@ -364,20 +364,20 @@ void hmc5883_thread_entry(void* parameter)
 			{
 				 mag_angle=180;		
 			}
-			if(ahrs.degree_yaw-mag_angle>360.0*yaw_a)
+			if(ahrs.degree_yaw-mag_angle>360.0f*yaw_a)
 			{
-				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0)+(1.0-yaw_a)*(mag_angle+360.0);
-				if(ahrs.degree_yaw>360.0)
-					ahrs.degree_yaw-=360.0;
+				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0f)+(1.0f-yaw_a)*(mag_angle+360.0f);
+				if(ahrs.degree_yaw>360.0f)
+					ahrs.degree_yaw-=360.0f;
 			}
-			else if (ahrs.degree_yaw-mag_angle<-360.0*yaw_a)
+			else if (ahrs.degree_yaw-mag_angle<-360.0f*yaw_a)
 			{
-				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0)+(1.0-yaw_a)*(mag_angle-360.0);
-				if(ahrs.degree_yaw<0.0)
-					ahrs.degree_yaw+=360.0;
+				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0f)+(1.0f-yaw_a)*(mag_angle-360.0f);
+				if(ahrs.degree_yaw<0.0f)
+					ahrs.degree_yaw+=360.0f;
 			}
 			else
-				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0)+(1.0-yaw_a)*mag_angle;
+				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0f)+(1.0f-yaw_a)*mag_angle;
 			mag=(s16)mag_angle;
 			
 			rt_event_send(&ahrs_event,AHRS_EVENT_HMC5883);

@@ -14,9 +14,9 @@ void Timer4_init()
  
 	TIM_Cmd(TIM2, ENABLE); 
 }
-double Timer4_GetSec()
+float Timer4_GetSec()
 {
-	double t=TIM_GetCounter(TIM2)/1000000.0;
+	float t=TIM_GetCounter(TIM2)/1000000.0;
 	TIM_SetCounter(TIM2,0);
 	return t;
 }

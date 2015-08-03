@@ -49,10 +49,10 @@ s16 MoveAve_WMA(volatile int16_t NewData, volatile int16_t *MoveAve_FIFO, u8 Sam
 
 	return AveData;
 }
-static double dt ;
+static float dt ;
 static void get_fps()
 {
-	rt_kprintf("fps:\t\t%d",(int)(1.0/dt));
+	rt_kprintf("fps:\t\t%d",(int)(1.0f/dt));
 }
 FINSH_FUNCTION_EXPORT(get_fps, get ahrs fps)
 
@@ -83,9 +83,9 @@ void Quaternion_ToAngE(Quaternion *pNumQ)
 	float NumQ_T23 = 2.0f * (pNumQ->q0 * pNumQ->q1 + pNumQ->q2 * pNumQ->q3);
 	float NumQ_T33 = pNumQ->q0 * pNumQ->q0 - pNumQ->q1 * pNumQ->q1 - pNumQ->q2 * pNumQ->q2 + pNumQ->q3 * pNumQ->q3;
 
-	ahrs.degree_roll	=	-asinf(NumQ_T13)* 180.0 / 3.14;
-	ahrs.degree_pitch	=	atan2f(NumQ_T23, NumQ_T33)* 180.0 / 3.14;
-	ahrs.degree_yaw		=	atan2f(NumQ_T12, NumQ_T11)* 180.0 / 3.14;
+	ahrs.degree_roll	=	-asinf(NumQ_T13)* 180.0f / 3.14f;
+	ahrs.degree_pitch	=	atan2f(NumQ_T23, NumQ_T33)* 180.0f / 3.14f;
+	ahrs.degree_yaw		=	atan2f(NumQ_T12, NumQ_T11)* 180.0f / 3.14f;
 //	pAngE->Yaw   = atan2f(NumQ_T12, NumQ_T11);
 }
 
@@ -97,7 +97,7 @@ FINSH_FUNCTION_EXPORT(angle_fix, fix mpu6050 acc )
 
 rt_inline float toRad(float degree)
 {
-	return degree *3.14 / 180.0;
+	return degree *3.14f / 180.0f;
 }
 
 //=====================================================================================================
@@ -136,7 +136,7 @@ Quaternion curq={1.0,0.0,0.0,0.0};
 
 #define Kp 15.0f                        // proportional gain governs rate of convergence to accelerometer/magnetometer
 #define Ki 0.02f                // integral gain governs rate of convergence of gyroscope biases
-#define halfT (dt / 2.0)                // half the sample period
+#define halfT (dt / 2.0f)                // half the sample period
 
 //---------------------------------------------------------------------------------------------------
 // Variable definitions
@@ -220,30 +220,30 @@ void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az/*, fl
 }
 
 /// todo : reorganize ahrs code ----------------------
-double p,r;
+float p,r;
 int cnt=0;
 void ahrs_update()
 {
-	double ax,ay;
-	const double a = 0.96;
-	const double gyroscale = MPU6050_GYRO_SCALE;
-	double tmp;
+	float ax,ay;
+	const float a = 0.96f;
+	const float gyroscale = MPU6050_GYRO_SCALE;
+	float tmp;
 	
 	dt = Timer4_GetSec();
 	
-	ahrs.gryo_pitch		= mpu_gryo_pitch 	* gyroscale / 32767.0;
-	ahrs.gryo_roll		= mpu_gryo_roll 	* gyroscale / 32767.0;
-	ahrs.gryo_yaw		= mpu_gryo_yaw 		* gyroscale / 32767.0;
+	ahrs.gryo_pitch		= mpu_gryo_pitch 	* gyroscale / 32767.0f;
+	ahrs.gryo_roll		= mpu_gryo_roll 	* gyroscale / 32767.0f;
+	ahrs.gryo_yaw		= mpu_gryo_yaw 		* gyroscale / 32767.0f;
 #ifndef USE_QUATERNION
 #ifdef MEASURE_ROTER
 	ax					= atan2(
 							mpu_acc_y,
 							sqrt(mpu_acc_x * mpu_acc_x +mpu_acc_z * mpu_acc_z)
-								)* 180.0 / 3.14;
+								)* 180.0f / 3.14f;
 	ay					= -atan2(
 							mpu_acc_x,
 							sqrt(mpu_acc_y * mpu_acc_y + mpu_acc_z * mpu_acc_z)
-								) * 180.0 / 3.14;
+								) * 180.0f / 3.14f;
 	ahrs.degree_pitch	= a * (ahrs.degree_pitch  + ahrs.gryo_pitch * dt) + (1 - a) * ax;
 	ahrs.degree_roll	= a * (ahrs.degree_roll + ahrs.gryo_roll * dt) + (1 - a) * ay;
 	ahrs.degree_yaw		= ahrs.degree_yaw + ahrs.gryo_yaw * dt;
@@ -251,28 +251,28 @@ void ahrs_update()
 	ax					= atan2(
 							mpu_acc_y,
 							sqrt(mpu_acc_x * mpu_acc_x +mpu_acc_z * mpu_acc_z)
-								)* 180.0 / 3.14;
+								)* 180.0f / 3.14f;
 	ay					= -atan2(
 							mpu_acc_x,
 							sqrt(mpu_acc_y * mpu_acc_y + mpu_acc_z * mpu_acc_z)
-								) * 180.0 / 3.14;
+								) * 180.0f / 3.14f;
 	p	= a * (ahrs.degree_pitch  + ahrs.gryo_pitch * dt) + (1 - a) * ax;
 	r	= a * (ahrs.degree_roll + ahrs.gryo_roll * dt) + (1 - a) * ay;
 	ahrs.degree_yaw		= ahrs.degree_yaw + ahrs.gryo_yaw * dt;
 {
-	    double norm;
-        double vx, vy, vz;
-        double ex, ey, ez;   
-		double az;
-        double gx, gy, gz;   
+	    float norm;
+        float vx, vy, vz;
+        float ex, ey, ez;   
+		float az;
+        float gx, gy, gz;   
 	
 		ax =mpu_acc_x;
 		ay =mpu_acc_y;
 		az= mpu_acc_z;
 	
-		gx =ahrs.gryo_pitch* 3.14 / 180.0;
-		gy =ahrs.gryo_roll* 3.14 / 180.0;
-		gz= ahrs.gryo_yaw* 3.14 / 180.0;
+		gx =ahrs.gryo_pitch* 3.14f / 180.0f;
+		gy =ahrs.gryo_roll* 3.14f / 180.0f;
+		gz= ahrs.gryo_yaw* 3.14f / 180.0f;
 
         // normalise the measurements
         norm = sqrt(ax*ax + ay*ay + az*az);      
@@ -330,7 +330,7 @@ void ahrs_update()
 
 volatile int16_t MPU6050_ACC_FIFO[3][256] = {{0}};
 volatile int16_t MPU6050_GYR_FIFO[3][256] = {{0}};
-double MPU6050_Diff[6]={15,-35,40,0};
+float MPU6050_Diff[6]={15,-35,40,0};
 void ahrs_put_mpu6050(s16 * data)
 {
 //	mpu_gryo_pitch=(MoveAve_WMA(data[3], MPU6050_GYR_FIFO[0], 5)+MPU6050_Diff[0]);
@@ -354,7 +354,7 @@ void ahrs_put_mpu6050(s16 * data)
 //float z_measure=0;
 //float kg=0;
 
-//void ahrs_put_bmp(double height)
+//void ahrs_put_bmp(float height)
 //{
 ////	ahrs.height=ahrs.height*0.9+height*0.1;
 //	    //气压计高度  -- 分米单位

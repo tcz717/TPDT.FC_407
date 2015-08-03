@@ -1,7 +1,7 @@
 #include "PID.h"
 #define PI 3.1415926
 
-void PID_SetTarget(PID* pid,double value)
+void PID_SetTarget(PID* pid,float value)
 {
 	pid->expect = value;
 //	pid->out = 0;
@@ -9,9 +9,9 @@ void PID_SetTarget(PID* pid,double value)
 //	pid->dv=0;
 //	pid->ldv=0;
 }
-double PID_Update(PID* pid,double value, double dv)
+float PID_Update(PID* pid,float value, float dv)
 {
-	double p, i, d;
+	float p, i, d;
 	pid->iv += (value - pid->expect);
 	pid->iv=RangeValue(pid->iv,-360,+360);
 	
@@ -28,9 +28,9 @@ double PID_Update(PID* pid,double value, double dv)
 	return pid->out;
 }
 extern struct ahrs_t ahrs;
-double PID_xUpdate(PID* pid,double value)
+float PID_xUpdate(PID* pid,float value)
 {
-	double dv= (value - pid->input) / pid->dt;
+	float dv= (value - pid->input) / pid->dt;
 	pid->dv= pid->dv + pid->filt_alpha * (dv-pid->dv);
 	
 	pid->outp = (value - pid->expect) * pid->p;
@@ -44,7 +44,7 @@ double PID_xUpdate(PID* pid,double value)
 	pid->input=value;
 	return pid->out;
 }
-double RangeValue(double value,double min,double max)
+float RangeValue(float value,float min,float max)
 {
 	if (value >= max)
 		return max;
@@ -53,7 +53,7 @@ double RangeValue(double value,double min,double max)
 	return value;
 }
 
-void PID_Init(PID* pid,double p,double i,double d)
+void PID_Init(PID* pid,float p,float i,float d)
 {
 	pid->p=p;
 	pid->i=i;
@@ -67,9 +67,9 @@ void PID_Init(PID* pid,double p,double i,double d)
 	pid->filt_alpha=1;
 }
 
-void PID_Set_Filt_Alpha(PID* pid,double dt,double filt_hz)
+void PID_Set_Filt_Alpha(PID* pid,float dt,float filt_hz)
 {
-	double rc = 1/(2*PI*filt_hz);
+	float rc = 1/(2*PI*filt_hz);
     pid->filt_alpha = dt / (dt + rc);
 	pid->dt=dt;
 }

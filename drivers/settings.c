@@ -138,46 +138,46 @@ FINSH_FUNCTION_EXPORT(save, save all config)
 
 void get_pid()
 {
-	rt_kprintf("pitch_angle:\t\t%d.%d.\n", (s32)p_angle_pid.p, (s32)(p_angle_pid.p*10.0) % 10);
+	rt_kprintf("pitch_angle:\t\t%d.%d.\n", (s32)p_angle_pid.p, (s32)(p_angle_pid.p*10.0f) % 10);
 	rt_kprintf("pitch_rate:		%d.%d	%d.%02d	%d.%03d.\n", 
-		(s32)p_rate_pid.p, (s32)(p_rate_pid.p*10.0) % 10,
-		(s32)p_rate_pid.i, (s32)(p_rate_pid.i*100.0) % 100,
-		(s32)p_rate_pid.d, (s32)(p_rate_pid.d*1000.0) % 1000);
+		(s32)p_rate_pid.p, (s32)(p_rate_pid.p*10.0f) % 10,
+		(s32)p_rate_pid.i, (s32)(p_rate_pid.i*100.0f) % 100,
+		(s32)p_rate_pid.d, (s32)(p_rate_pid.d*1000.0f) % 1000);
 
-	rt_kprintf("roll_angle:		%d.%d.\n", (s32)r_angle_pid.p, (s32)(r_angle_pid.p*10.0) % 10);
+	rt_kprintf("roll_angle:		%d.%d.\n", (s32)r_angle_pid.p, (s32)(r_angle_pid.p*10.0f) % 10);
 	rt_kprintf("roll_rate:		%d.%d	%d.%02d	%d.%03d.\n", 
-		(s32)r_rate_pid.p, (s32)(r_rate_pid.p*10.0) % 10,
-		(s32)r_rate_pid.i, (s32)(r_rate_pid.i*100.0) % 100,
-		(s32)r_rate_pid.d, (s32)(r_rate_pid.d*1000.0) % 1000);
+		(s32)r_rate_pid.p, (s32)(r_rate_pid.p*10.0f) % 10,
+		(s32)r_rate_pid.i, (s32)(r_rate_pid.i*100.0f) % 100,
+		(s32)r_rate_pid.d, (s32)(r_rate_pid.d*1000.0f) % 1000);
 
-	rt_kprintf("yaw_angle:		%d.%d.\n", (s32)y_angle_pid.p, (s32)(y_angle_pid.p*10.0) % 10);
+	rt_kprintf("yaw_angle:		%d.%d.\n", (s32)y_angle_pid.p, (s32)(y_angle_pid.p*10.0f) % 10);
 	rt_kprintf("yaw_rate:		%d.%d	%d.%02d	%d.%03d.\n", 
-		(s32)y_rate_pid.p, (s32)(y_rate_pid.p*10.0) % 10,
-		(s32)y_rate_pid.i, (s32)(y_rate_pid.i*100.0) % 100,
-		(s32)y_rate_pid.d, (s32)(y_rate_pid.d*1000.0) % 1000);
+		(s32)y_rate_pid.p, (s32)(y_rate_pid.p*10.0f) % 10,
+		(s32)y_rate_pid.i, (s32)(y_rate_pid.i*100.0f) % 100,
+		(s32)y_rate_pid.d, (s32)(y_rate_pid.d*1000.0f) % 1000);
 
-	rt_kprintf("x_axis_d:		%d.%02d.\n", (s32)x_d_pid.p, (s32)(x_d_pid.p*100.0) % 100);
+	rt_kprintf("x_axis_d:		%d.%02d.\n", (s32)x_d_pid.p, (s32)(x_d_pid.p*100.0f) % 100);
 	rt_kprintf("x_axis_v:		%d.%d	%d.%02d	%d.%03d.\n",
-		(s32)x_v_pid.p, (s32)(x_v_pid.p*10.0) % 10,
-		(s32)x_v_pid.i, (s32)(x_v_pid.i*100.0) % 100,
-		(s32)x_v_pid.d, (s32)(x_v_pid.d*1000.0) % 1000);
+		(s32)x_v_pid.p, (s32)(x_v_pid.p*10.0f) % 10,
+		(s32)x_v_pid.i, (s32)(x_v_pid.i*100.0f) % 100,
+		(s32)x_v_pid.d, (s32)(x_v_pid.d*1000.0f) % 1000);
 
-	rt_kprintf("y_axis_d:		%d.%02d.\n", (s32)y_d_pid.p, (s32)(y_d_pid.p*100.0) % 100);
+	rt_kprintf("y_axis_d:		%d.%02d.\n", (s32)y_d_pid.p, (s32)(y_d_pid.p*100.0f) % 100);
 	rt_kprintf("y_axis_v:		%d.%d	%d.%02d	%d.%03d.\n",
-		(s32)y_v_pid.p, (s32)(y_v_pid.p*10.0) % 10,
-		(s32)y_v_pid.i, (s32)(y_v_pid.i*100.0) % 100,
-		(s32)y_v_pid.d, (s32)(y_v_pid.d*1000.0) % 1000);
+		(s32)y_v_pid.p, (s32)(y_v_pid.p*10.0f) % 10,
+		(s32)y_v_pid.i, (s32)(y_v_pid.i*100.0f) % 100,
+		(s32)y_v_pid.d, (s32)(y_v_pid.d*1000.0f) % 1000);
 
-	rt_kprintf("height	:		%d.%d	%d.%02d	%d.%03d.\n", (s32)h_pid.p, (s32)(h_pid.p*10.0) % 10,
-		(s32)h_pid.i, (s32)(h_pid.i*100.0) % 100,
-		(s32)h_pid.d, (s32)(h_pid.d*1000.0) % 1000);
+	rt_kprintf("height	:		%d.%d	%d.%02d	%d.%03d.\n", (s32)h_pid.p, (s32)(h_pid.p*10.0f) % 10,
+		(s32)h_pid.i, (s32)(h_pid.i*100.0f) % 100,
+		(s32)h_pid.d, (s32)(h_pid.d*1000.0f) % 1000);
 }
 FINSH_FUNCTION_EXPORT(get_pid, show the value of pid)
 
 void set_pitch(s16 ap, s16 p, s16 i, s16 d)
 {
-	PID_Init(&p_angle_pid, ap / 10.0, 0.0, 0.0);
-	PID_Init(&p_rate_pid, p / 10.0, i / 100.0, d / 1000.0);
+	PID_Init(&p_angle_pid, ap / 10.0f, 0.0f, 0.0f);
+	PID_Init(&p_rate_pid, p / 10.0f, i / 100.0f, d / 1000.0f);
 
 	settings.pitch_angle_p = p_angle_pid.p;
 	settings.pitch_rate_p = p_rate_pid.p;
@@ -192,8 +192,8 @@ FINSH_FUNCTION_EXPORT(set_pitch, set the value of pid in pitch)
 
 void set_roll(s16 ap, s16 p, s16 i, s16 d)
 {
-	PID_Init(&r_angle_pid, ap / 10.0, 0.0, 0.0);
-	PID_Init(&r_rate_pid, p / 10.0, i / 100.0, d / 1000.0);
+	PID_Init(&r_angle_pid, ap / 10.0f, 0.0f, 0.0f);
+	PID_Init(&r_rate_pid, p / 10.0f, i / 100.0f, d / 1000.0f);
 
 	settings.roll_angle_p = r_angle_pid.p;
 	settings.roll_rate_p = r_rate_pid.p;
@@ -208,8 +208,8 @@ FINSH_FUNCTION_EXPORT(set_roll, set the value of pid in roll)
 
 void set_yaw(s16 ap, s16 p, s16 i, s16 d)
 {
-	PID_Init(&y_angle_pid, ap / 10.0, 0.0, 0.0);
-	PID_Init(&y_rate_pid, p / 10.0, i / 100.0, d / 1000.0);
+	PID_Init(&y_angle_pid, ap / 10.0f, 0.0f, 0.0f);
+	PID_Init(&y_rate_pid, p / 10.0f, i / 100.0f, d / 1000.0f);
 
 	settings.yaw_angle_p = y_angle_pid.p;
 	settings.yaw_rate_p = y_rate_pid.p;
@@ -224,8 +224,8 @@ FINSH_FUNCTION_EXPORT(set_yaw, set the value of pid in yaw)
 
 void set_x(s16 ap, s16 p, s16 i, s16 d)
 {
-	PID_Init(&x_d_pid, ap / 100.0, 0.0, 0.0);
-	PID_Init(&x_v_pid, p / 10.0, i / 100.0, d / 1000.0);
+	PID_Init(&x_d_pid, ap / 100.0f, 0.0f, 0.0f);
+	PID_Init(&x_v_pid, p / 10.0f, i / 100.0f, d / 1000.0f);
 
 	settings.x_d_p = x_d_pid.p;
 	settings.x_v_p = x_v_pid.p;
@@ -240,8 +240,8 @@ FINSH_FUNCTION_EXPORT(set_x, set the value of pid in x axis)
 
 void set_y(s16 ap, s16 p, s16 i, s16 d)
 {
-	PID_Init(&y_d_pid, ap / 100.0, 0.0, 0.0);
-	PID_Init(&y_v_pid, p / 10.0, i / 100.0, d / 1000.0);
+	PID_Init(&y_d_pid, ap / 100.0f, 0.0f, 0.0f);
+	PID_Init(&y_v_pid, p / 10.0f, i / 100.0f, d / 1000.0f);
 
 	settings.y_d_p = y_d_pid.p;
 	settings.y_v_p = y_v_pid.p;
@@ -256,7 +256,7 @@ FINSH_FUNCTION_EXPORT(set_y, set the value of pid in y axis)
 
 void set_height(s16 p, s16 i, s16 d)
 {
-	PID_Init(&h_pid, p / 10.0, i / 100.0, d / 1000.0);
+	PID_Init(&h_pid, p / 10.0f, i / 100.0f, d / 1000.0f);
 
 	settings.h_p = h_pid.p;
 	settings.h_i = h_pid.i;

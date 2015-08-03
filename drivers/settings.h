@@ -12,38 +12,38 @@ struct setting_t
 {
 	u16 magic;
 	
-	double pitch_angle_p;
-	double pitch_rate_p;
-	double pitch_rate_i;
-	double pitch_rate_d;
+	float pitch_angle_p;
+	float pitch_rate_p;
+	float pitch_rate_i;
+	float pitch_rate_d;
 	
-	double roll_angle_p;
-	double roll_rate_p;
-	double roll_rate_i;
-	double roll_rate_d;
+	float roll_angle_p;
+	float roll_rate_p;
+	float roll_rate_i;
+	float roll_rate_d;
 	
-	double yaw_angle_p;
-	double yaw_rate_p;
-	double yaw_rate_i;
-	double yaw_rate_d;
+	float yaw_angle_p;
+	float yaw_rate_p;
+	float yaw_rate_i;
+	float yaw_rate_d;
 
-	double x_d_p;
-	double x_v_p;
-	double x_v_i;
-	double x_v_d;
+	float x_d_p;
+	float x_v_p;
+	float x_v_i;
+	float x_v_d;
 
-	double y_d_p;
-	double y_v_p;
-	double y_v_i;
-	double y_v_d;
+	float y_d_p;
+	float y_v_p;
+	float y_v_i;
+	float y_v_d;
 	
-	double h_p;
-	double h_i;
-	double h_d;
+	float h_p;
+	float h_i;
+	float h_d;
 	
-	double angle_diff_pitch;
-	double angle_diff_roll;
-	double angle_diff_yaw;
+	float angle_diff_pitch;
+	float angle_diff_roll;
+	float angle_diff_yaw;
 	
 	u16 roll_min;
 	u16 roll_mid;
