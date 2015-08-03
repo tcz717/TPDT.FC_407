@@ -25,3 +25,6 @@
 *.vcxproj.*
 *.sdf
 *.opensdf
+*.bin
+*.sln
+*.vcxproj
