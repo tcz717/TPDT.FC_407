@@ -27,7 +27,6 @@
  //#include "i2c1.h"
 #include "adns3080.h"
 #include "ahrs.h"
-#include "bmp085.h"
 #include "hardtimer.h"
 #include "hmc5883.h"
 #include "inv_mpu.h"
@@ -35,7 +34,6 @@
 #include "LED.h"
 #include "math.h"
 #include "Motor.h"
-#include "MPU6050.h"
 #include "PID.h"
 #include "settings.h"
 #include "sonar.h"
@@ -616,6 +614,10 @@ void rt_init_thread_entry(void* parameter)
 	sonar_init();
 	HMC5983_Init();
 	adns3080_Init();
+	
+	extern rt_err_t camera_init(const char * uart_name);
+	
+	camera_init("uart1");
 
 	//config_bt();
 

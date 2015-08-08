@@ -1,0 +1,11 @@
+Import('RTT_ROOT')
+Import('rtconfig')
+from building import *
+
+cwd     = os.path.join(str(Dir('#')), 'drivers/eMPL')
+src	= Glob('*.c')
+CPPPATH = [cwd]
+
+group = DefineGroup('dmp', src, depend = [''], CPPPATH = CPPPATH)
+
+Return('group')
