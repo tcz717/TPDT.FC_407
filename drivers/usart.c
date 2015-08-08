@@ -121,7 +121,7 @@ struct rt_device uart6_device;
 #define UART6_GPIO_RX       GPIO_Pin_7
 #define UART6_RX_PIN_SOURCE GPIO_PinSource7
 #define UART6_GPIO          GPIOC
-#define UART6_GPIO_RCC      RCC_AHB1Periph_GPIOD
+#define UART6_GPIO_RCC      RCC_AHB1Periph_GPIOC
 #define RCC_APBPeriph_UART6 RCC_APB2Periph_USART6
 
 static void RCC_Configuration(void)
@@ -151,10 +151,10 @@ static void RCC_Configuration(void)
 #endif
 
 #ifdef RT_USING_UART6
-    /* Enable USART2 GPIO clocks */
+    /* Enable USART6 GPIO clocks */
     RCC_AHB1PeriphClockCmd(UART6_GPIO_RCC, ENABLE);
-    /* Enable USART2 clock */
-    RCC_APB1PeriphClockCmd(RCC_APBPeriph_UART6, ENABLE);
+    /* Enable USART6 clock */
+    RCC_APB2PeriphClockCmd(RCC_APBPeriph_UART6, ENABLE);
 #endif
 }
 
@@ -407,7 +407,7 @@ void rt_hw_usart_init()
 
     /* register uart2 */
     rt_hw_serial_register(&uart6_device, "uart6",
-        RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_INT_RX | RT_DEVICE_FLAG_STREAM,
+        RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_INT_RX,
         &uart6);
 
     /* Enable USART2 DMA Rx request */

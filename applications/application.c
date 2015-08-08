@@ -39,8 +39,7 @@
 #include "sonar.h"
 #include "stm32_iic.h"
 #include "stm32_spi.h"
-//#include "car_config.h"
-//#include "IIC_OLED.h"
+#include "remote.h"
 
 #ifdef RT_USING_DFS
 /* dfs filesystem:ELM filesystem init */
@@ -618,6 +617,7 @@ void rt_init_thread_entry(void* parameter)
 	extern rt_err_t camera_init(const char * uart_name);
 	
 	camera_init("uart1");
+	remote_init("uart6");
 
 	//config_bt();
 
