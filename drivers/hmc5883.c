@@ -418,6 +418,7 @@ rt_err_t HMC5983_Init(void)          //≥ı ºªØHMC5983
 	}
 	
 	has_hmc5883=RT_TRUE;
+	ahrs_state.hmc5883=RT_EOK;
 	rt_thread_startup(hmc5883_thread);
 	
 	return RT_EOK;

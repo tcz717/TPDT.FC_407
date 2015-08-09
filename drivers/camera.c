@@ -3,6 +3,7 @@
 #include <rtdevice.h>
 #include <rthw.h>
 #include <rtthread.h>
+#include "ahrs.h"
 
 #define crBegin static int state=0; switch(state) { case 0:
 #define crReturn(x) do { state=__LINE__; return x; \
@@ -125,11 +126,13 @@ void camera_thread_entry(void* parameter)
 		
 		if (pack_parser(re))
 		{
-			rt_kprintf("get packet:#%03d\tstate:%4d\tangle:%4d\tmid:%4d\n"
-				,recv.pack.frame_cnt
-				,recv.pack.linestate
-				,(s32)recv.pack.angle_error
-				,recv.pack.middle_error);
+//			rt_kprintf("get packet:#%03d\tstate:%4d\tangle:%4d\tmid:%4d\n"
+//				,recv.pack.frame_cnt
+//				,recv.pack.linestate
+//				,(s32)recv.pack.angle_error
+//				,recv.pack.middle_error);
+			ahrs_state.camera=RT_EOK;
+			rt_event_send(&ahrs_event,AHRS_EVENT_CARMERA);
 		}
 	}
 }

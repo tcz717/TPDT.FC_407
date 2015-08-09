@@ -9,6 +9,7 @@ int16_t mpu_acc_x,mpu_acc_y,mpu_acc_z;
 int16_t mpu_gryo_pitch,mpu_gryo_roll,mpu_gryo_yaw;
 struct rt_semaphore angle_fix_sem;
 struct rt_event ahrs_event;
+ahrs_state_t ahrs_state;
 
 s16 MoveAve_SMA(volatile int16_t NewData, volatile int16_t *MoveAve_FIFO, u8 SampleNum)
 {
@@ -346,6 +347,11 @@ void ahrs_put_mpu6050(s16 * data)
 	mpu_acc_x=data[0]+MPU6050_Diff[3];
 	mpu_acc_y=data[1]+MPU6050_Diff[4];
 	mpu_acc_z=data[2]+MPU6050_Diff[5];
+}
+
+void ahrs_init()
+{
+	memset(&ahrs_state,-1,sizeof(ahrs_state));
 }
 
 //float kalman_input_baro_altitude;  //¿¨¶ûÂüÂË²¨ÊäÈëÊı¾İ

@@ -1,4 +1,5 @@
 #include "remote.h"
+#include "safe.h"
 
 #define crBegin static int state=0; switch(state) { case 0:
 #define crReturn(x) do { state=__LINE__; return x; \
@@ -55,20 +56,41 @@ static uint8_t checksum(char * data,rt_size_t size)
 	return sum;
 }
 
-static void send_ack(uint16_t index)
+static void send_error(uint16_t index,uint8_t code)
 {
 	send.ack.head=head;
 	send.ack.index=index;
 	send.ack.type=TFCR_TYPE_ACK;
-	send.ack.code=0;
+	send.ack.code=code;
 	send.ack.checksum=checksum(send.buf,sizeof(struct tfcr_ack)-1);
 	
 	rt_device_write(uart,0,send.buf,sizeof(struct tfcr_ack));
 }
 
+const char * task[]=
+{
+	"default",
+	"mayday",
+};
+rt_bool_t excute_task(const char * name)
+{
+	for(int j=0;j<sizeof(task);j++)
+	{
+		if(rt_strcasecmp(name,task[j]))
+			return RT_TRUE;
+	}
+	return RT_FALSE;
+}
+
+static void send_ack(uint16_t index)
+{
+	send_error(index,0);
+}
+
 void remote_thread_entry(void* parameter)
 {
 	char * ptr;
+	u8 lost=0;
 	rt_tick_t last=rt_tick_get();
 	while(1)
 	{
@@ -106,15 +128,55 @@ void remote_thread_entry(void* parameter)
 				
 				tfrc_con=RT_TRUE;
 				break;
+			case TFCR_TYPE_TASK:
+				while(ptr-pack.buf<sizeof(struct tfcr_task))
+					get(ptr++);
+				
+				if(checksum(pack.buf,sizeof(struct tfcr_task)-1)!=pack.task.checksum)
+					goto wrong;
+				
+				if(pack.task.state==1)
+				{
+					u8 result= check_safe();
+					if(result!=0)
+					{
+						send_error(pack.task.index,result);
+						rt_kprintf("start task %s fail! %d\n",pack.task.name,result);
+						break;
+					}
+					send_ack(pack.task.index);
+					
+					if(!excute_task(pack.task.name))
+					{
+						send_error(pack.task.index,0xff);
+					rt_kprintf("no task %s!\n",pack.task.name);
+						break;
+					}
+					rt_kprintf("start task %s.\n",pack.task.name);
+				}
+				else
+					rt_kprintf("stop task %s.\n",pack.task.name);
+				break;
 		}
 		
 		last=rt_tick_get();
+		lost=0;
 		continue;
 		
 		timeout:
 		if(tfrc_con)
-			rt_kprintf("tfcr time out.\n");
-		tfrc_con=RT_FALSE;
+		{
+			if(lost<3)
+			{
+				rt_kprintf("tfcr time out.\n");
+				lost++;
+			}
+			else
+			{
+				rt_kprintf("tfcr lost connect.\n");
+				tfrc_con=RT_FALSE;
+			}
+		}
 		continue;
 		
 		wrong:

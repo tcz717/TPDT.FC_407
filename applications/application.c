@@ -182,37 +182,37 @@ void dmp_init()
 {
 	Timer4_init();
 
-	while (1 == mpu_init());
+	while (mpu_init());
 	//mpu_set_sensor
-	while (1 == mpu_set_sensors(INV_XYZ_GYRO | INV_XYZ_ACCEL));
+	while (mpu_set_sensors(INV_XYZ_GYRO | INV_XYZ_ACCEL));
 
 	//mpu_configure_fifo
-	while (1 == mpu_configure_fifo(INV_XYZ_GYRO | INV_XYZ_ACCEL));
+	while (mpu_configure_fifo(INV_XYZ_GYRO | INV_XYZ_ACCEL));
 
 	//mpu_set_sample_rate
-	while (1 == mpu_set_sample_rate(DEFAULT_MPU_HZ));
+	while (mpu_set_sample_rate(DEFAULT_MPU_HZ));
 
 	//dmp_load_motion_driver_firmvare
-	while (1 == dmp_load_motion_driver_firmware());
+	while (dmp_load_motion_driver_firmware());
 
 	//dmp_set_orientation
-	while (1 == dmp_set_orientation(inv_orientation_matrix_to_scalar(gyro_orientation)));
+	while (dmp_set_orientation(inv_orientation_matrix_to_scalar(gyro_orientation)));
 
 	//dmp_enable_feature
-	while (1 == dmp_enable_feature(DMP_FEATURE_6X_LP_QUAT | DMP_FEATURE_TAP |
+	while (dmp_enable_feature(DMP_FEATURE_6X_LP_QUAT | DMP_FEATURE_TAP |
 		DMP_FEATURE_ANDROID_ORIENT | DMP_FEATURE_SEND_RAW_ACCEL | DMP_FEATURE_SEND_CAL_GYRO |
 		DMP_FEATURE_GYRO_CAL));
 
 	//dmp_set_fifo_rate
-	while (1 == dmp_set_fifo_rate(DEFAULT_MPU_HZ));
+	while (dmp_set_fifo_rate(DEFAULT_MPU_HZ));
 
 	run_self_test();
 
-	while (1 == mpu_set_dmp_state(1));
+	while (mpu_set_dmp_state(1));
 
 	rt_kprintf("start mpu6050\n");
-
-	rt_kprintf("start ahrs\n");
+	
+	ahrs_state.mpu6050=RT_EOK;
 }
 u8 get_dmp()
 {

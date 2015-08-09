@@ -13,6 +13,8 @@
 char input[100];
 int script;
 int cur;
+char text[1024];
+rt_size_t fsize;
 
 static rt_err_t (*rx_indicate)(rt_device_t dev, rt_size_t size);
 struct rt_semaphore rx_sem;
@@ -46,13 +48,14 @@ int tgetc()
 	char ch;
 	rt_sem_take(&rx_sem,RT_WAITING_FOREVER);
 	rt_device_read(device,0,&ch,1);
+//	rt_kprintf("%c",ch);
 	return ch;
 }
 char * tgets(char * buf)
 {
 	int j=0;
 	char ch;
-	while((ch=tgetc())!='\n')
+	while((ch=tgetc())&&ch!='\n'&&ch!='\r')
 	{
 		buf[j++]=ch;
 	}
@@ -79,10 +82,10 @@ void ShowText()
 {
 	char ch;
 	int line = 1;
-	lseek(script, 0, DFS_SEEK_SET);
 	rt_kprintf("%c%3d ", line == cur ? '#' : ' ', line);
-	while (read(script,&ch,1))
+	for(int j=0;j<fsize;j++)
 	{
+		ch=text[j];
 		if (ch == '\n')
 		{
 			line ++ ;
@@ -94,6 +97,18 @@ void ShowText()
 	}
 }
 
+void LoadText()
+{
+	char ch;
+	int line = 1;
+	fsize=0;
+	lseek(script, 0, DFS_SEEK_SET);
+	while (read(script,&ch,1))
+	{
+		text[fsize++]=ch;
+	}
+}
+
 void promt()
 {
 	rt_kprintf("\n>");
@@ -102,7 +117,20 @@ void promt()
 void parse(char * input)
 {
 	int size = strlen(input);
-
+	char cmd=input[0];
+	int gl;
+	switch(cmd)
+	{
+		case 'i':
+			
+			break;
+		case 'g':
+			if(size>1)
+			{
+				gl=atoi(input+1);
+			}
+			break;
+	}
 }
 
 void Editor(char * path)
@@ -110,7 +138,10 @@ void Editor(char * path)
 	take_console();
 	
 	cur = 1;
+	
 	script = open(path,O_APPEND|O_CREAT|O_RDWR,0);
+	
+	LoadText();
 
 	while (1)
 	{

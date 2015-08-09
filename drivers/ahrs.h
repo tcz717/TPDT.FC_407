@@ -14,6 +14,7 @@
 #define AHRS_EVENT_HMC5883	(1 << 2)
 #define AHRS_EVENT_ADNS3080	(1 << 3)
 #define AHRS_EVENT_SONAR	(1 << 4)
+#define AHRS_EVENT_CARMERA	(1 << 5)
 #define AHRS_EVENT_Update 	(1 << 7)
 #define AHRS_EVENT_WRONG 	(1 << 15)
 
@@ -35,6 +36,17 @@ extern struct ahrs_t
 	float degree_yaw;
 	float time_span;
 }ahrs;
+
+typedef struct 
+{
+	rt_err_t mpu6050;
+	rt_err_t hmc5883;
+	rt_err_t sonar;
+	rt_err_t adns3080;
+	rt_err_t camera;
+}ahrs_state_t;
+
+extern ahrs_state_t ahrs_state;
 
 typedef struct {
 	float q0;

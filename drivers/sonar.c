@@ -34,6 +34,7 @@ void sonar_thread_entry(void* parameter)
 		sonar_h=MoveAve_WMA(PWM8_Time,sonar_avr,SAMPLE_COUNT)/58.0f;
 		h=(u16)sonar_h;
 		sonar_state=sonar_h>5.0f&&sonar_h<200.0f;
+		ahrs_state.sonar=sonar_state;
 		
 		rt_event_send(&ahrs_event,AHRS_EVENT_SONAR);
 	}
