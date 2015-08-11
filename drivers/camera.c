@@ -4,6 +4,7 @@
 #include <rthw.h>
 #include <rtthread.h>
 #include "ahrs.h"
+#include "camera.h"
 
 #define crBegin static int state=0; switch(state) { case 0:
 #define crReturn(x) do { state=__LINE__; return x; \
@@ -12,50 +13,9 @@
 
 rt_device_t uart;
 
-enum
-{
-	LINE_STRAIGHT,//直线
-				  //	LINE_TURN_LEFT_45,
-	LINE_TURN_LEFT_90,
-	//	LINE_TURN_RIGHT_45,
-	LINE_TURN_RIGHT_90,
-	LINE_END,
-	LINE_LOSTfromLEFT,
-	LINE_LOSTfromRIGHT,
-	LINE_LOSTfromBOTTOM,
-	LINE_LOST_ERROR,
-};
-#define REPORT_PACKAGE_HEAD 0x23
-typedef struct
-{
-	uint8_t head;
-	uint8_t frame_cnt;//帧计数
-	uint8_t linestate;
-	uint8_t dummy0;//为了对齐32位用
-	float angle_error;
-	//朝向误差
-	//                  0 degree
-	//                  A
-	//                  A
-	//                  A
-	//                  A
-	//                  A
-	//                  A
-	//-90degree ←←←←←←←←A→→→→→→→→→→→→ +90degree
-	int8_t middle_error;
-	//离中心线的距离//负值代表线在飞机左边（即飞机需要左移）
-	uint8_t dummy1;
-	uint8_t dummy2;
-	uint8_t checksum;
-} report_package_type;
-
 static struct rt_semaphore cam_sem;
 
-union data_pack
-{
-	report_package_type pack;
-	char data[sizeof(report_package_type)];
-}recv;
+union data_pack recv;
 
 u8 read_state=0;
 rt_err_t byte_recv(rt_device_t dev, rt_size_t size)
@@ -102,6 +62,7 @@ rt_bool_t pack_parser(char ch)
 void camera_thread_entry(void* parameter)
 {
 	char re;
+	ahrs_state.camera=RT_ENOSYS;
 	while (1)
 	{
 		rt_sem_take(&cam_sem, RT_WAITING_FOREVER);
@@ -131,6 +92,8 @@ void camera_thread_entry(void* parameter)
 //				,recv.pack.linestate
 //				,(s32)recv.pack.angle_error
 //				,recv.pack.middle_error);
+			if(ahrs_state.camera!=RT_EOK)
+				rt_kprintf("find camera.\n");
 			ahrs_state.camera=RT_EOK;
 			rt_event_send(&ahrs_event,AHRS_EVENT_CARMERA);
 		}

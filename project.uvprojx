@@ -147,7 +147,7 @@
             <RestoreSysVw>1</RestoreSysVw>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>-1</TargetSelection>
+          <TargetSelection>11</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -161,7 +161,7 @@
             <PeripheralDll></PeripheralDll>
             <PeripheralDllArguments></PeripheralDllArguments>
             <InitializationFile></InitializationFile>
-            <Driver>STLink\ST-LINKIII-KEIL.dll</Driver>
+            <Driver>STLink\ST-LINKIII-KEIL_SWO.dll</Driver>
           </TargetDlls>
         </DebugOption>
         <Utilities>
@@ -365,7 +365,7 @@
               <MiscControls></MiscControls>
               <Define>RT_USING_ARM_LIBC, USE_STDPERIPH_DRIVER , HSE_VALUE=8000000</Define>
               <Undefine></Undefine>
-              <IncludePath>applications;.;drivers;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\CMSIS\ST\STM32F4xx\Include;Libraries\CMSIS\Include;..\rt-thread\include;..\rt-thread\libcpu\arm\cortex-m4;..\rt-thread\libcpu\arm\common;..\rt-thread\components\dfs\include;..\rt-thread\components\dfs\filesystems\elmfat;..\rt-thread\components\dfs\filesystems\romfs;..\rt-thread\components\drivers\include;..\rt-thread\components\drivers\spi;..\rt-thread\components\drivers\include;..\rt-thread\components\finsh;..\rt-thread\components\libc\armlibc;.\drivers\eMPL</IncludePath>
+              <IncludePath>applications;.;drivers;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\CMSIS\ST\STM32F4xx\Include;Libraries\CMSIS\Include;..\rt-thread\include;..\rt-thread\libcpu\arm\cortex-m4;..\rt-thread\libcpu\arm\common;..\rt-thread\components\dfs\include;..\rt-thread\components\dfs\filesystems\elmfat;..\rt-thread\components\dfs\filesystems\romfs;..\rt-thread\components\drivers\include;..\rt-thread\components\drivers\spi;..\rt-thread\components\drivers\include;..\rt-thread\components\finsh;..\rt-thread\components\libc\armlibc;.\drivers\eMPL;.\control</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -398,7 +398,7 @@
             <ScatterFile></ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
-            <Misc> --keep *.o(.rti_fn.*)   --keep *.o(FSymTab) --keep *.o(VSymTab) </Misc>
+            <Misc>--keep *.o(.rti_fn.*)   --keep *.o(FSymTab) --keep *.o(VSymTab)</Misc>
             <LinkerInputFile></LinkerInputFile>
             <DisabledWarnings></DisabledWarnings>
           </LDads>
@@ -429,11 +429,6 @@
               <FilePath>drivers\Motor.c</FilePath>
             </File>
             <File>
-              <FileName>PID.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>drivers\PID.c</FilePath>
-            </File>
-            <File>
               <FileName>PWM.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\PWM.c</FilePath>
@@ -442,11 +437,6 @@
               <FileName>adns3080.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\adns3080.c</FilePath>
-            </File>
-            <File>
-              <FileName>ahrs.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>drivers\ahrs.c</FilePath>
             </File>
             <File>
               <FileName>board.c</FileName>
@@ -522,6 +512,46 @@
               <FileName>inv_mpu_dmp_motion_driver.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\drivers\eMPL\inv_mpu_dmp_motion_driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>pwm_remote.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\pwm_remote.c</FilePath>
+            </File>
+            <File>
+              <FileName>remote.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\remote.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Control</GroupName>
+          <Files>
+            <File>
+              <FileName>safe.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\control\safe.c</FilePath>
+            </File>
+            <File>
+              <FileName>ahrs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\control\ahrs.c</FilePath>
+            </File>
+            <File>
+              <FileName>control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\control\control.c</FilePath>
+            </File>
+            <File>
+              <FileName>PID.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\control\PID.c</FilePath>
+            </File>
+            <File>
+              <FileName>line_track.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\control\line_track.c</FilePath>
             </File>
           </Files>
         </Group>

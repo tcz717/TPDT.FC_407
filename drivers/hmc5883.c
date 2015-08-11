@@ -11,7 +11,7 @@
 #define	SCL2_Pin GPIO_Pin_10
 #define delay_us(i) I2C_delay()
 #define SAMPLE_COUNT 6
-#define yaw_a 0.6f
+#define yaw_a 0.5f
  
 #define   IIC_SDA_1     GPIOB->BSRRL = SDA2_Pin     
 #define   IIC_SDA_0     GPIOB->BSRRH  = SDA2_Pin    

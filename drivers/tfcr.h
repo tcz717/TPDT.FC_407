@@ -4,13 +4,17 @@
 
 #define TFCR_TYPE_PING       0x00
 #define TFCR_TYPE_TASK       0x01
+#define TFCR_TYPE_GET_VALUE  0x02
+#define TFCR_TYPE_VALUE 	 0xFE
 #define TFCR_TYPE_ACK        0xFF
 
 #define TFCR_HEAD            0xABCD
 
-#define TFCR_IS_PACK_TYPE(type) 	(((type)==TFCR_TYPE_PING)||		\
-									((type)==TFCR_TYPE_TASK)||		\
-									((type)==TFCR_TYPE_ACK))
+#define TFCR_IS_PACK_TYPE(type) 	(((type)==TFCR_TYPE_PING)||			\
+									((type)==TFCR_TYPE_TASK)||			\
+									((type)==TFCR_TYPE_ACK)||			\
+									((type)==TFCR_TYPE_GET_VALUE)||	\
+									((type)==TFCR_TYPE_VALUE))
 
 #pragma pack(push)
 #pragma pack(1)
@@ -44,6 +48,17 @@ struct tfcr_task
 	uint8_t checksum;
 };
 
+struct tfcr_get_value
+{
+	uint16_t head;
+	uint8_t type;
+	uint16_t index;
+	
+	uint8_t id;
+	
+	uint8_t checksum;
+};
+
 //controller only
 struct tfcr_ack
 {
@@ -51,6 +66,21 @@ struct tfcr_ack
 	uint8_t type;
 	uint16_t index;
 	uint8_t code;//0 for ok
+	uint8_t checksum;
+};
+
+
+struct tfcr_value
+{
+	uint16_t head;
+	uint8_t type;
+	uint16_t index;
+	uint8_t id;
+	
+	float value1;
+	float value2;
+	float value3;
+	
 	uint8_t checksum;
 };
 #pragma pack(pop)

@@ -190,6 +190,11 @@ void adns3080_thread_entry(void* parameter)
 
 		opx += optc_dx;
 		opy += optc_dy;
+		
+		ahrs.x=opx;
+		ahrs.y=opy;
+		ahrs.dx=optc_dx*0.5f+ahrs.dx*0.5f;
+		ahrs.dy=optc_dy*0.5f+ahrs.dy*0.5f;
 
 		//		if((!(data[0]&0x10))&&(data[0]&0x80))
 		//		{

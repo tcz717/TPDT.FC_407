@@ -32,9 +32,10 @@ void sonar_thread_entry(void* parameter)
 		rt_thread_delay(RT_TICK_PER_SECOND*50/1000);
 		
 		sonar_h=MoveAve_WMA(PWM8_Time,sonar_avr,SAMPLE_COUNT)/58.0f;
+		ahrs.height=sonar_h;
 		h=(u16)sonar_h;
-		sonar_state=sonar_h>5.0f&&sonar_h<200.0f;
-		ahrs_state.sonar=sonar_state;
+		sonar_state=sonar_h>3.0f&&sonar_h<150.0f;
+		ahrs_state.sonar=!sonar_state;
 		
 		rt_event_send(&ahrs_event,AHRS_EVENT_SONAR);
 	}

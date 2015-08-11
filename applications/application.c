@@ -40,6 +40,7 @@
 #include "stm32_iic.h"
 #include "stm32_spi.h"
 #include "remote.h"
+#include "control.h"
 
 #ifdef RT_USING_DFS
 /* dfs filesystem:ELM filesystem init */
@@ -56,55 +57,9 @@
 #define debug(fmt, ...)
 #endif
 
-#define LED1(TIME) led_period[0]=(TIME)
-#define LED2(TIME) led_period[1]=(TIME)
-#define LED3(TIME) led_period[2]=(TIME)
-#define LED4(TIME) led_period[3]=(TIME)
-
-ALIGN(RT_ALIGN_SIZE)
-static rt_uint8_t led_stack[256];
-static struct rt_thread led_thread;
-
-ALIGN(RT_ALIGN_SIZE)
-static rt_uint8_t control_stack[1024];
-static struct rt_thread control_thread;
-
 ALIGN(RT_ALIGN_SIZE)
 static rt_uint8_t correct_stack[1024];
 static struct rt_thread correct_thread;
-
-u8 led_period[4];
-void led_thread_entry(void* parameter)
-{
-	u8 time[4];
-	while (1)
-	{
-		if (led_period[0])
-			time[0] = (time[0] + 1) % led_period[0];
-		else
-			time[0] = 1;
-		LED_set1(!time[0]);
-
-		if (led_period[1])
-			time[1] = (time[1] + 1) % led_period[1];
-		else
-			time[1] = 1;
-		LED_set2(!time[1]);
-
-		if (led_period[2])
-			time[2] = (time[2] + 1) % led_period[2];
-		else
-			time[2] = 1;
-		LED_set3(!time[2]);
-
-		if (led_period[3])
-			time[3] = (time[3] + 1) % led_period[3];
-		else
-			time[3] = 1;
-		LED_set4(!time[3]);
-		rt_thread_delay(50);
-	}
-}
 
 #pragma region MPU6050_DMP
 u8 en_out_ahrs = 0;
@@ -122,7 +77,7 @@ unsigned char more;
 long quat[4];
 #define PITCH_D -1.25
 #define ROLL_D 5
-static u16 dmp_retry = 0;
+u16 dmp_retry = 0;
 extern volatile int16_t MPU6050_GYR_FIFO[3][256];
 static signed char gyro_orientation[9] = { -1, 0, 0,
 										   0,-1, 0,
@@ -250,27 +205,16 @@ u8 get_dmp()
 		dmp_retry = 0;
 		return 1;
 	}
-lost:
 	dmp_retry++;
+	if (dmp_retry > 200)
+	{
+		Motor_Set(0, 0, 0, 0);
+		ahrs_state.mpu6050=RT_EIO;
+		LED3(2);
+	}
 	return 0;
 }
 #pragma endregion
-
-u8 balence = 0;
-u8 pwmcon = 0;
-u8 poscon = 0;
-PID p_rate_pid, r_rate_pid, y_rate_pid,
-p_angle_pid, r_angle_pid, y_angle_pid;
-PID x_v_pid, y_v_pid,
-x_d_pid, y_d_pid;
-PID	h_pid;
-s16 pitch_ctl[16], roll_ctl[16], yaw_ctl[16];
-s16 pos_X, pos_y;
-
-rt_bool_t lost_ahrs = RT_FALSE;
-
-u8 en_out_pwm = 0;
-FINSH_VAR_EXPORT(pwmcon, finsh_type_uchar, lock state)
 
 void correct_gryo()
 {
@@ -305,231 +249,6 @@ void correct_gryo()
 	rt_free(mpu3);
 
 	rt_kprintf("sensor correct finish.\n");
-}
-u16 throttle = 0;
-float pitch = 0;
-float roll = 0;
-float yaw = 0;
-void control_thread_entry(void* parameter)
-{
-	float yaw_inc = 0;
-	float yaw_exp = 0;
-	u8 i;
-	u8 take_off = 0;
-
-	p_rate_pid.expect = 0;
-	r_rate_pid.expect = 0;
-	y_rate_pid.expect = 0;
-	p_angle_pid.expect = 0;
-	r_angle_pid.expect = 0;
-
-	LED2(5);
-	for (i = 0;i < 15;i++)
-	{
-		u8 j;
-		for (j = 0;j < 200;j++)
-		{
-			get_dmp();
-			rt_thread_delay(2);
-		}
-	}
-
-	rt_kprintf("start control\n");
-
-	while (1)
-	{
-		LED2(pwmcon * 3);
-		if (pwmcon)
-		{
-			if (PWM3_Time <= settings.th_max&&PWM3_Time >= settings.th_min)
-				throttle = (PWM3_Time - settings.th_min) * 1000 / (settings.th_max - settings.th_min);
-			else
-				throttle = 0;
-
-			if (PWM1_Time <= settings.roll_max&&PWM1_Time >= settings.roll_min)
-			{
-				roll = MoveAve_WMA(PWM1_Time, roll_ctl, 16) - settings.roll_mid;
-				if (roll > 5)
-					PID_SetTarget(&r_angle_pid, -roll / (float)(settings.roll_max - settings.roll_mid)*45.0f);
-				else if (roll < -5)
-					PID_SetTarget(&r_angle_pid, -roll
-						/ (float)(settings.roll_mid - settings.roll_min)*45.0f);
-				else
-					PID_SetTarget(&r_angle_pid, 0);
-			}
-			if (PWM2_Time <= settings.pitch_max&&PWM2_Time >= settings.pitch_min)
-			{
-				pitch = MoveAve_WMA(PWM2_Time, pitch_ctl, 16) - settings.pitch_mid;
-				if (pitch > 5)
-					PID_SetTarget(&p_angle_pid, -pitch
-						/ (float)(settings.pitch_max - settings.pitch_mid)*30.0f);
-				else if (pitch < -5)
-					PID_SetTarget(&p_angle_pid, -pitch
-						/ (float)(settings.pitch_mid - settings.pitch_min)*30.0f);
-				else
-					PID_SetTarget(&p_angle_pid, 0);
-			}
-			if (PWM4_Time <= settings.yaw_max&&PWM4_Time >= settings.yaw_min)
-			{
-				yaw_inc = MoveAve_WMA(PWM4_Time, yaw_ctl, 16) - settings.yaw_mid;
-				if (has_hmc5883)
-				{
-					if (yaw_inc > 5)
-						yaw_exp -= yaw_inc / (float)(settings.yaw_max - settings.yaw_mid)*0.5f;
-					else if (yaw_inc < -5)
-						yaw_exp -= yaw_inc / (float)(settings.yaw_mid - settings.yaw_min)*0.5f;
-					if (yaw_exp > 360.0f)yaw_exp -= 360.0f;
-					else if (yaw_exp < 0.0f)yaw_exp += 360.0f;
-					PID_SetTarget(&y_angle_pid, 0);
-				}
-				else
-				{
-					if (yaw > 5)
-						PID_SetTarget(&y_rate_pid, -yaw_inc
-							/ (float)(settings.yaw_max - settings.yaw_mid)*100.0f);
-					else if (yaw < -5)
-						PID_SetTarget(&y_rate_pid, -yaw_inc
-							/ (float)(settings.yaw_mid - settings.yaw_min)*100.0f);
-					else
-						PID_SetTarget(&y_rate_pid, 0);
-				}
-			}
-			if (!balence)
-				Motor_Set(throttle, throttle, throttle, throttle);
-		}
-		else if (PWM3_Time > settings.th_min&&PWM3_Time < settings.th_min + 40 &&
-			PWM5_Time < 1700 && PWM5_Time>500)
-		{
-			//set pwm middle
-			if (!pwmcon)
-			{
-				settings.roll_mid = PWM1_Time;
-				settings.pitch_mid = PWM2_Time;
-				settings.yaw_mid = PWM4_Time;
-			}
-			pwmcon = 1;
-			balence = 1;
-			p_rate_pid.iv = 0;
-			r_rate_pid.iv = 0;
-			y_rate_pid.iv = 0;
-			take_off = 1;
-			yaw_exp = ahrs.degree_yaw;
-		}
-
-		if (get_dmp() && balence)
-		{
-			rt_uint32_t dump;
-			if (throttle > 60 && abs(ahrs.degree_pitch) < 40 && abs(ahrs.degree_roll) < 40)
-			{
-				if (PWM5_Time < 1200 && PWM5_Time>800 && sonar_state)
-				{
-					if (rt_event_recv(&ahrs_event, AHRS_EVENT_SONAR, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_NO, &dump) == RT_EOK)
-					{
-						PID_SetTarget(&h_pid, 60.0);
-						PID_xUpdate(&h_pid, sonar_h);
-						h_pid.out = RangeValue(h_pid.out, -200, 200);
-					}
-					LED4(4);
-					throttle = 500;
-
-					if (has_adns3080&& PWM7_Time > 1500)
-					{
-						if (!poscon)
-						{
-							poscon = 1;
-							pos_X = opx;
-							pos_y = opy;
-						}
-						if (rt_event_recv(&ahrs_event, AHRS_EVENT_ADNS3080, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_NO, &dump) == RT_EOK)
-						{
-							PID_SetTarget(&x_d_pid, pos_X);
-							PID_SetTarget(&y_d_pid, pos_y);
-
-							PID_xUpdate(&x_d_pid, opx);
-							PID_xUpdate(&y_d_pid, opy);
-
-							PID_SetTarget(&x_v_pid, -RangeValue(x_d_pid.out, -10, 10));
-							PID_SetTarget(&y_v_pid, -RangeValue(y_d_pid.out, -10, 10));
-
-							PID_xUpdate(&x_v_pid, optc_dx);
-							PID_xUpdate(&y_v_pid, optc_dy);
-						}
-						LED4(2);
-						PID_SetTarget(&r_angle_pid, -RangeValue(x_v_pid.out, -10, 10));
-						PID_SetTarget(&p_angle_pid, +RangeValue(y_v_pid.out, -10, 10));
-					}
-					else
-						poscon = 0;
-				}
-				else
-				{
-					h_pid.out = 0;
-					LED4(0);
-				}
-
-				PID_xUpdate(&p_angle_pid, ahrs.degree_pitch);
-				PID_SetTarget(&p_rate_pid, -RangeValue(p_angle_pid.out, -80, 80));
-				PID_xUpdate(&p_rate_pid, ahrs.gryo_pitch);
-
-				PID_xUpdate(&r_angle_pid, ahrs.degree_roll);
-				PID_SetTarget(&r_rate_pid, -RangeValue(r_angle_pid.out, -80, 80));
-				PID_xUpdate(&r_rate_pid, ahrs.gryo_roll);
-
-				if (has_hmc5883)
-				{
-					if (rt_event_recv(&ahrs_event, AHRS_EVENT_HMC5883, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_NO, &dump) == RT_EOK)
-					{
-						yaw = ahrs.degree_yaw - yaw_exp;
-						if (yaw > 180.0f)yaw -= 360.0f;
-						if (yaw < -180.0f)yaw += 360.0f;
-						PID_xUpdate(&y_angle_pid, yaw);
-						PID_SetTarget(&y_rate_pid, -RangeValue(y_angle_pid.out, -100, 100));
-					}
-				}
-				PID_xUpdate(&y_rate_pid, ahrs.gryo_yaw);
-
-				Motor_Set1(throttle - p_rate_pid.out - r_rate_pid.out + y_rate_pid.out - h_pid.out);
-				Motor_Set2(throttle - p_rate_pid.out + r_rate_pid.out - y_rate_pid.out - h_pid.out);
-				Motor_Set3(throttle + p_rate_pid.out - r_rate_pid.out - y_rate_pid.out - h_pid.out);
-				Motor_Set4(throttle + p_rate_pid.out + r_rate_pid.out + y_rate_pid.out - h_pid.out);
-			}
-			else
-				Motor_Set(60, 60, 60, 60);
-		}
-		else
-			LED4(0);
-
-		if (PWM5_Time > 1700)
-		{
-			Motor_Set(0, 0, 0, 0);
-			p_rate_pid.iv = 0;
-			r_rate_pid.iv = 0;
-			y_rate_pid.iv = 0;
-			balence = 0;
-			pwmcon = 0;
-		}
-
-		if (dmp_retry > 200)
-		{
-			Motor_Set(0, 0, 0, 0);
-			balence = 0;
-			pwmcon = 0;
-			LED3(2);
-			break;
-		}
-
-		if (en_out_pwm)
-		{
-			rt_kprintf("\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
-				PWM1_Time, PWM2_Time, PWM3_Time, PWM4_Time,
-				PWM5_Time, PWM6_Time, PWM7_Time, PWM8_Time);
-			//			rt_kprintf("\t%d\t%d\t%d\t%d\t%d\t%d\n",
-			//				Motor1,Motor2,Motor3,
-			//				Motor4,Motor5,Motor6);
-		}
-
-		rt_thread_delay(2);
-	}
 }
 
 void correct_thread_entry(void* parameter)
@@ -621,13 +340,6 @@ void rt_init_thread_entry(void* parameter)
 
 	//config_bt();
 
-	rt_thread_init(&led_thread,
-		"led",
-		led_thread_entry,
-		RT_NULL,
-		led_stack,
-		256, 16, 1);
-	rt_thread_startup(&led_thread);
 
 	spi_flash_init();
 
@@ -644,31 +356,6 @@ void rt_init_thread_entry(void* parameter)
 		rt_kprintf("flash0 mount to / failed.\n");
 	}
 
-	//default settings
-	PID_Init(&p_rate_pid, 0, 0, 0);
-	PID_Init(&r_rate_pid, 0, 0, 0);
-	PID_Init(&y_rate_pid, 0, 0, 0);
-	PID_Init(&p_angle_pid, 0, 0, 0);
-	PID_Init(&r_angle_pid, 0, 0, 0);
-	PID_Init(&y_angle_pid, 0, 0, 0);
-	PID_Init(&x_v_pid, 0, 0, 0);
-	PID_Init(&y_v_pid, 0, 0, 0);
-	PID_Init(&x_d_pid, 0, 0, 0);
-	PID_Init(&y_d_pid, 0, 0, 0);
-	PID_Init(&h_pid, 0, 0, 0);
-
-	load_settings(&settings, "/setting", &p_angle_pid, &p_rate_pid
-		, &r_angle_pid, &r_rate_pid
-		, &y_angle_pid, &y_rate_pid
-		, &x_d_pid, &x_v_pid
-		, &y_d_pid, &y_v_pid
-		, &h_pid);
-
-	settings.roll_min = settings.pitch_min = settings.yaw_min = 1000;
-	settings.th_min = 1000;
-	settings.roll_max = settings.pitch_max = settings.yaw_max = 2000;
-	settings.th_max = 2000;
-
 	//	if(settings.pwm_init_mode)
 	//	{
 	//		Motor_Set(1000,1000,1000,1000);
@@ -683,27 +370,6 @@ void rt_init_thread_entry(void* parameter)
 	//		rt_kprintf("pwm init finished!\n");
 	//	}
 
-	get_pid();
-	PID_Set_Filt_Alpha(&p_rate_pid, 1.0 / 166.0, 20.0);
-	PID_Set_Filt_Alpha(&r_rate_pid, 1.0 / 166.0, 20.0);
-	PID_Set_Filt_Alpha(&y_rate_pid, 1.0 / 166.0, 20.0);
-	PID_Set_Filt_Alpha(&p_angle_pid, 1.0 / 166.0, 20.0);
-	PID_Set_Filt_Alpha(&r_angle_pid, 1.0 / 166.0, 20.0);
-	PID_Set_Filt_Alpha(&y_angle_pid, 1.0 / 75.0, 20.0);
-	PID_Set_Filt_Alpha(&x_v_pid, 1.0 / 100.0, 20.0);
-	PID_Set_Filt_Alpha(&y_v_pid, 1.0 / 100.0, 20.0);
-	PID_Set_Filt_Alpha(&x_d_pid, 1.0 / 100.0, 20.0);
-	PID_Set_Filt_Alpha(&y_d_pid, 1.0 / 100.0, 20.0);
-	PID_Set_Filt_Alpha(&h_pid, 1.0 / 60.0, 20.0);
-
-	rt_thread_init(&control_thread,
-		"control",
-		control_thread_entry,
-		RT_NULL,
-		control_stack,
-		1024, 3, 5);
-	rt_thread_startup(&control_thread);
-
 	rt_thread_init(&correct_thread,
 		"correct",
 		correct_thread_entry,
@@ -712,6 +378,8 @@ void rt_init_thread_entry(void* parameter)
 		1024, 12, 1);
 	rt_thread_startup(&correct_thread);
 
+	control_init();
+	
 	LED1(5);
 }
 

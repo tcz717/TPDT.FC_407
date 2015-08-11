@@ -35,15 +35,16 @@ rt_err_t stable_mode(u8 var);
 rt_err_t althold_mode(u8 var);
 rt_err_t loiter_mode(u8 var);
 rt_err_t wait_mode(u8 var){Motor_Set(0,0,0,0); return RT_EOK;}
+rt_err_t mayday(u8 var){disarm(); return RT_EOK;}
 
 fc_task task[16]=
 {
-	0,"default",RT_NULL,0,
-	1,"mayday",RT_NULL,0,
-	2,"stable",stable_mode,0,
-	3,"althold",althold_mode,50,
-	4,"loiter",loiter_mode,50,
-	255,"wait",wait_mode,0,
+	0,"default",RT_NULL,0,SAFE_ADNS3080|SAFE_HMC5883|SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR,
+	1,"mayday",mayday,0,0,
+	2,"stable",stable_mode,0,SAFE_HMC5883|SAFE_MPU6050|SAFE_PWM,
+	3,"althold",althold_mode,50,SAFE_HMC5883|SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,
+	4,"loiter",loiter_mode,50,SAFE_ADNS3080|SAFE_HMC5883|SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,
+	255,"wait",wait_mode,0,0,
 };
 
 fc_task * current_task;
@@ -78,18 +79,32 @@ rt_err_t disarm()
 	return RT_EOK;
 }
 
-rt_bool_t excute_task(const char * name)
-{
+fc_task * find_task(const char * name)
+{	
 	for(int j=0;j<sizeof(task);j++)
 	{
 		if(!rt_strcasecmp(name,task[j].name))
 		{
-			current_task=&task[j];
-			rt_kprintf("start task %s.\n",task[j].name);
-			return RT_TRUE;
+			return &task[j];
 		}
 	}
-	return RT_FALSE;
+	return RT_NULL;
+}
+
+rt_bool_t excute_task(const char * name)
+{
+	fc_task * t=find_task(name);
+	if(t==RT_NULL)
+		return RT_FALSE;
+	
+	if(check_safe(t->depend))
+	{
+		rt_kprintf("start task %s fail %d.\n",t->name,check_safe(t->depend));
+		return RT_FALSE;
+	}
+	current_task=t;
+	rt_kprintf("start task %s.\n",t->name);
+	return RT_TRUE;
 }
 
 void stable(float pitch,float roll,float yaw)
@@ -164,6 +179,21 @@ void loiter(float x,float y,float yaw)
 	stable(+RangeValue(y_v_pid.out, -10, 10) ,-RangeValue(x_v_pid.out, -10, 10),yaw);
 }
 
+void motor_update(u16 th)
+{
+	Motor_Set1(th - p_rate_pid.out - r_rate_pid.out + y_rate_pid.out);
+	Motor_Set2(th - p_rate_pid.out + r_rate_pid.out - y_rate_pid.out);
+	Motor_Set3(th + p_rate_pid.out - r_rate_pid.out - y_rate_pid.out);
+	Motor_Set4(th + p_rate_pid.out + r_rate_pid.out + y_rate_pid.out);
+}
+void motor_hupdate(u16 th)
+{
+	Motor_Set1(th - p_rate_pid.out - r_rate_pid.out + y_rate_pid.out - h_pid.out);
+	Motor_Set2(th - p_rate_pid.out + r_rate_pid.out - y_rate_pid.out - h_pid.out);
+	Motor_Set3(th + p_rate_pid.out - r_rate_pid.out - y_rate_pid.out - h_pid.out);
+	Motor_Set4(th + p_rate_pid.out + r_rate_pid.out + y_rate_pid.out - h_pid.out);
+}
+
 rt_err_t stable_mode(u8 var)
 {
 	if (pwm.throttle  > 0.05f && abs(ahrs.degree_pitch) < 40 && abs(ahrs.degree_roll) < 40)
@@ -172,10 +202,7 @@ rt_err_t stable_mode(u8 var)
 		
 		stable(pwm.pitch*30.0f,pwm.roll*30.0f,yaw_exp);
 		
-		Motor_Set1(pwm.throttle * 1000 - p_rate_pid.out - r_rate_pid.out + y_rate_pid.out);
-		Motor_Set2(pwm.throttle * 1000 - p_rate_pid.out + r_rate_pid.out - y_rate_pid.out);
-		Motor_Set3(pwm.throttle * 1000 + p_rate_pid.out - r_rate_pid.out - y_rate_pid.out);
-		Motor_Set4(pwm.throttle * 1000 + p_rate_pid.out + r_rate_pid.out + y_rate_pid.out);
+		motor_update(pwm.throttle * 1000);
 	}
 	else
 		Motor_Set(60, 60, 60, 60);
@@ -193,10 +220,7 @@ rt_err_t althold_mode(u8 height)
 		
 		althold(height);
 
-		Motor_Set1(basic_thought - p_rate_pid.out - r_rate_pid.out + y_rate_pid.out - h_pid.out);
-		Motor_Set2(basic_thought - p_rate_pid.out + r_rate_pid.out - y_rate_pid.out - h_pid.out);
-		Motor_Set3(basic_thought + p_rate_pid.out - r_rate_pid.out - y_rate_pid.out - h_pid.out);
-		Motor_Set4(basic_thought + p_rate_pid.out + r_rate_pid.out + y_rate_pid.out - h_pid.out);
+		motor_hupdate(basic_thought);
 	}
 	else
 		Motor_Set(60, 60, 60, 60);
@@ -214,21 +238,16 @@ rt_err_t loiter_mode(u8 height)
 		
 		althold(height);
 
-		Motor_Set1(basic_thought - p_rate_pid.out - r_rate_pid.out + y_rate_pid.out - h_pid.out);
-		Motor_Set2(basic_thought - p_rate_pid.out + r_rate_pid.out - y_rate_pid.out - h_pid.out);
-		Motor_Set3(basic_thought + p_rate_pid.out - r_rate_pid.out - y_rate_pid.out - h_pid.out);
-		Motor_Set4(basic_thought + p_rate_pid.out + r_rate_pid.out + y_rate_pid.out - h_pid.out);
+		motor_hupdate(basic_thought);
 	}
 	else
 		Motor_Set(60, 60, 60, 60);
 	return RT_EOK;
 }
 
-void control_thread_entry(void* parameter)
+void wait_dmp()
 {
 	u8 i;
-
-	LED2(5);
 	for (i = 0;i < 15;i++)
 	{
 		u8 j;
@@ -238,7 +257,23 @@ void control_thread_entry(void* parameter)
 			rt_thread_delay(2);
 		}
 	}
+}
 
+float linear(float input,float start ,float end ,float time)
+{
+	float out;
+	out=input+(end-start)/time;
+	if(start>end)
+		return RangeValue(out,end,start);
+	else
+		return RangeValue(out,start,end);
+}
+
+void control_thread_entry(void* parameter)
+{
+	LED2(5);
+
+	wait_dmp();
 	rt_kprintf("start control\n");
 	excute_task("wait");
 
@@ -248,18 +283,18 @@ void control_thread_entry(void* parameter)
 		
 		receive_pwm(&pwm);
 		
-		if(pwm.switch1<2 && pwm.switch1!=-1 && pwm.throttle<0.05f && pwm.throttle > 0.0f)
+		if(pwm.switch1<2 && pwm.switch1!=-1 && pwm.throttle<0.05f && pwm.throttle >= 0.0f)
 		{
 			arm(SAFE_PWM);
 		}
-		if(pwm.switch1==2||pwm.switch1==-1||check_safe(SAFE_MPU6050))
+		if(pwm.switch1==2||pwm.switch1==-1||check_safe(current_task->depend))
 		{
 			disarm();
 		}
 
 		if (get_dmp() && armed)
 		{
-			if(check_safe(SAFE_PWM)==RT_EOK)
+			if(check_safe(SAFE_PWM)==RT_EOK&&check_safe(SAFE_TFCR)!=RT_EOK)
 			{
 				if(current_task->id != 2 && pwm.switch1 == 1)
 				{
@@ -277,11 +312,9 @@ void control_thread_entry(void* parameter)
 				}
 			}
 			
-			current_task->func(current_task->var);
+			if(current_task->func(current_task->var)!=RT_EOK)
+				disarm();
 		}
-
-		extern u16 dmp_retry;
-
 		rt_thread_delay(2);
 	}
 }
@@ -334,4 +367,7 @@ void control_init()
 		control_stack,
 		1024, 3, 5);
 	rt_thread_startup(&control_thread);
+	
+	extern void line_register(void);
+	line_register();
 }

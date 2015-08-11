@@ -19,7 +19,7 @@ rt_err_t check_safe(rt_uint32_t checklist)
 			return SAFE_PWM;
 	}
 	
-	if(tfrc_con && checklist & SAFE_TFCR)
+	if(!tfrc_con && (checklist & SAFE_TFCR))
 		return SAFE_TFCR;
 	return 0;
 }

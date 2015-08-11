@@ -1,5 +1,7 @@
 #include "remote.h"
+#include "control.h"
 #include "safe.h"
+#include "camera.h"
 
 #define crBegin static int state=0; switch(state) { case 0:
 #define crReturn(x) do { state=__LINE__; return x; \
@@ -8,6 +10,7 @@
 
 #define get(ptr) if(!getc((ptr))) goto timeout;
 
+//#define TFCR_DEBUG
 #ifdef TFCR_DEBUG
 #define debug(fmt, ...)   rt_kprintf(fmt, ##__VA_ARGS__)
 #else
@@ -20,7 +23,9 @@ union tfcr_pack
 	struct tfcr_common head;
 	struct tfcr_ping ping;
 	struct tfcr_task task;
-	char buf[16];
+	struct tfcr_get_value get;
+	struct tfcr_value value;
+	char buf[20];
 }pack,send;
 
 const uint16_t head=TFCR_HEAD;
@@ -58,7 +63,7 @@ static uint8_t checksum(char * data,rt_size_t size)
 
 static void send_error(uint16_t index,uint8_t code)
 {
-	send.ack.head=head;
+	send.ack.head=head; 
 	send.ack.index=index;
 	send.ack.type=TFCR_TYPE_ACK;
 	send.ack.code=code;
@@ -67,24 +72,40 @@ static void send_error(uint16_t index,uint8_t code)
 	rt_device_write(uart,0,send.buf,sizeof(struct tfcr_ack));
 }
 
-const char * task[]=
-{
-	"default",
-	"mayday",
-};
-rt_bool_t excute_task(const char * name)
-{
-	for(int j=0;j<sizeof(task);j++)
-	{
-		if(rt_strcasecmp(name,task[j]))
-			return RT_TRUE;
-	}
-	return RT_FALSE;
-}
-
 static void send_ack(uint16_t index)
 {
 	send_error(index,0);
+}
+
+static void send_value(uint16_t index,uint8_t id)
+{
+	send.value.head=head;
+	send.value.index=index;
+	send.value.type=TFCR_TYPE_VALUE;
+	send.value.id=id;
+	
+	switch(id)
+	{
+		default:
+		case 0:
+			send.value.value1=ahrs.degree_pitch;
+			send.value.value2=ahrs.degree_roll;
+			send.value.value3=ahrs.degree_yaw;
+			break;
+		case 1:
+			send.value.value1=ahrs.x;
+			send.value.value2=ahrs.y;
+			send.value.value3=ahrs.height;
+		case 2:
+			send.value.value1=recv.pack.angle_error;
+			send.value.value2=recv.pack.middle_error;
+			send.value.value3=recv.pack.linestate;
+			break;
+	}
+	
+	send.value.checksum=checksum(send.buf,sizeof(struct tfcr_value)-1);
+	
+	rt_device_write(uart,0,send.buf,sizeof(struct tfcr_value));
 }
 
 void remote_thread_entry(void* parameter)
@@ -135,27 +156,56 @@ void remote_thread_entry(void* parameter)
 				if(checksum(pack.buf,sizeof(struct tfcr_task)-1)!=pack.task.checksum)
 					goto wrong;
 				
+				if(rt_strcasecmp(pack.task.name,"mayday")==0)
+				{
+					excute_task("mayday");
+					disarm();
+					send_ack(pack.task.index);
+					break;
+				}
+				
 				if(pack.task.state==1)
 				{
-					u8 result= check_safe();
+					fc_task * task=find_task(pack.task.name);
+					
+					if(task==RT_NULL)
+					{
+						send_error(pack.task.index,0xff);
+						rt_kprintf("no task %s!\n",pack.task.name);
+						break;
+					}
+					
+					u8 result= check_safe(task->depend);
 					if(result!=0)
 					{
 						send_error(pack.task.index,result);
-						rt_kprintf("start task %s fail! %d\n",pack.task.name,result);
 						break;
 					}
-					send_ack(pack.task.index);
 					
 					if(!excute_task(pack.task.name))
 					{
 						send_error(pack.task.index,0xff);
-					rt_kprintf("no task %s!\n",pack.task.name);
 						break;
 					}
-					rt_kprintf("start task %s.\n",pack.task.name);
+					arm(task->depend);
+					send_ack(pack.task.index);
 				}
 				else
+				{
+					excute_task("wait");
+					send_ack(pack.task.index);
 					rt_kprintf("stop task %s.\n",pack.task.name);
+				}
+				break;
+			case TFCR_TYPE_GET_VALUE:
+				while(ptr-pack.buf<sizeof(struct tfcr_get_value))
+					get(ptr++);
+				
+				if(checksum(pack.buf,sizeof(struct tfcr_get_value)-1)!=pack.get.checksum)
+					goto wrong;
+				
+				send_value(pack.get.index,pack.get.id);
+				
 				break;
 		}
 		
