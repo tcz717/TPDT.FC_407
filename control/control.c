@@ -200,6 +200,8 @@ rt_err_t stable_mode(u8 var)
 	if (pwm.throttle  > 0.05f && abs(ahrs.degree_pitch) < 40 && abs(ahrs.degree_roll) < 40)
 	{
 		yaw_exp+=pwm.yaw*0.5f;
+		if (yaw_exp > 360.0f)yaw_exp -= 360.0f;
+		if (yaw_exp < 0.0f)yaw_exp += 360.0f;
 		
 		stable(pwm.pitch*30.0f,pwm.roll*30.0f,yaw_exp);
 		
@@ -216,6 +218,8 @@ rt_err_t althold_mode(u8 height)
 	if (pwm.throttle  > 0.3f && abs(ahrs.degree_pitch) < 40 && abs(ahrs.degree_roll) < 40)
 	{
 		yaw_exp+=pwm.yaw*0.5f;
+		if (yaw_exp > 360.0f)yaw_exp -= 360.0f;
+		if (yaw_exp < 0.0f)yaw_exp += 360.0f;
 		
 		stable(pwm.pitch*30.0f,pwm.roll*30.0f,yaw_exp);
 		

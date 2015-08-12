@@ -42,7 +42,7 @@ void receive_pwm(pwm_signal_t * signal)
 	{
 		yaw = MoveAve_WMA(PWM4_Time, yaw_ctl, 16) - settings.yaw_mid;
 		if (yaw > 5)
-			signal->yaw = -yaw / (float)(settings.yaw_mid - settings.yaw_min);
+			signal->yaw = -yaw / (float)(settings.yaw_max - settings.yaw_mid);
 		else if (yaw < -5)
 			signal->yaw = -yaw / (float)(settings.yaw_mid - settings.yaw_min);
 		else

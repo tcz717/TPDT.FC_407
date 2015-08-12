@@ -5,7 +5,7 @@
 #include "ahrs.h"
 #include "PWM.h"
 
-#define SAMPLE_COUNT 4
+#define SAMPLE_COUNT 8
 
 ALIGN(RT_ALIGN_SIZE)
 static rt_uint8_t sonar_stack[ 512 ];

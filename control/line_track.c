@@ -24,8 +24,8 @@ struct line_pid
 rt_err_t line_track(u8 var)
 {
 	static float h;
-//	static float x,y;
 	static float yaw;
+	static uint8_t waitl;
 	
 	tPre;
 	if(line_task->reset)
@@ -36,8 +36,7 @@ rt_err_t line_track(u8 var)
 	tBegin;
 	yaw=ahrs.degree_yaw;
 	h=0;
-//	x=ahrs.x;
-//	y=ahrs.y;
+	waitl=1;
 	while(h<49.0f)//take off
 	{
 		h=linear(h,5,50,RT_TICK_PER_SECOND/2);
@@ -52,21 +51,42 @@ rt_err_t line_track(u8 var)
 		tReturn(RT_EOK);
 	}
 	rt_kprintf("start line track.\n");
-	while(1) //line track
+	rt_uint32_t dump;
+	do
 	{
-		rt_uint32_t dump;
 		if (rt_event_recv(&ahrs_event, AHRS_EVENT_CARMERA, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_NO, &dump) == RT_EOK)
 		{
-			PID_SetTarget(&pid.dist,0);
+			if(recv.pack.linestate==LINE_STRAIGHT)
+				waitl=0;
+			else
+				waitl++;
+			if(waitl>60)
+				goto land;
 			
-			PID_xUpdate(&pid.dist,ahrs.line_err);
+		}
+		stable(0,0,yaw);
+		
+		althold(50);
+	}while(waitl>0);
+	rt_kprintf("find line.\n");
+	while(1) //line track
+	{
+		if (rt_event_recv(&ahrs_event, AHRS_EVENT_CARMERA, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_NO, &dump) == RT_EOK)
+		{
+			if(recv.pack.linestate==LINE_STRAIGHT)
+			{
+				PID_SetTarget(&pid.dist,0);
+				PID_xUpdate(&pid.dist,ahrs.line_err);
+			}
 			
-			rt_kprintf("r:%d\te:%d\to:%d\th:%d\ta:%d\n",(s16)ahrs.degree_roll,(s16)ahrs.line_err,(s16)pid.dist.out,(s16)ahrs.height,(s16)recv.pack.angle_error);
+			rt_kprintf("e:%d\to:%d\th:%d\ta:%d\ty:%d\n",(s16)ahrs.line_err,(s16)pid.dist.out,(s16)ahrs.height,(s16)recv.pack.angle_error,(s16)ahrs.degree_yaw);
 			
 			if(recv.pack.linestate==LINE_LOST_ERROR)
 				goto land;
 		}
-		
+//		float y=yaw+ahrs.angle_err;
+//		if (y > 360.0f)y -= 360.0f;
+//		if (y < 0.0f)y += 360.0f;
 		stable(pwm.pitch*10.0f,RangeValue(pid.dist.out,-5,5),yaw);
 		althold(50);
 		motor_hupdate(450);

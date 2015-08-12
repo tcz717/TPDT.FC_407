@@ -18,6 +18,7 @@ static struct rt_semaphore cam_sem;
 union data_pack recv;
 
 s16 line[8];
+s16 angle[8];
 
 u8 read_state=0;
 rt_err_t byte_recv(rt_device_t dev, rt_size_t size)
@@ -98,6 +99,7 @@ void camera_thread_entry(void* parameter)
 				rt_kprintf("find camera.\n");
 			ahrs_state.camera=RT_EOK;
 			ahrs.line_err=MoveAve_WMA(recv.pack.middle_error,line,4);
+			ahrs.angle_err=MoveAve_WMA(recv.pack.angle_error,angle,4);
 			rt_event_send(&ahrs_event,AHRS_EVENT_CARMERA);
 		}
 	}
