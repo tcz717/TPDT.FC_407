@@ -17,6 +17,8 @@ static struct rt_semaphore cam_sem;
 
 union data_pack recv;
 
+s16 line[8];
+
 u8 read_state=0;
 rt_err_t byte_recv(rt_device_t dev, rt_size_t size)
 {
@@ -95,6 +97,7 @@ void camera_thread_entry(void* parameter)
 			if(ahrs_state.camera!=RT_EOK)
 				rt_kprintf("find camera.\n");
 			ahrs_state.camera=RT_EOK;
+			ahrs.line_err=MoveAve_WMA(recv.pack.middle_error,line,4);
 			rt_event_send(&ahrs_event,AHRS_EVENT_CARMERA);
 		}
 	}
@@ -112,7 +115,7 @@ rt_err_t camera_init(const char * uart_name)
 	
 	rt_sem_init(&cam_sem,"cam",0,RT_IPC_FLAG_FIFO);
 	
-	camera_thread = rt_thread_create("camera",camera_thread_entry,RT_NULL,512,10,3);
+	camera_thread = rt_thread_create("camera",camera_thread_entry,RT_NULL,512,6,3);
 
 	rt_thread_startup(camera_thread);
 	

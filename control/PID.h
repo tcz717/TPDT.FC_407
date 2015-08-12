@@ -21,6 +21,7 @@ typedef struct
 	float dt;
 }PID;
 
+void PID_Reset(PID* pid);
 void PID_SetTarget(PID*,float value);
 float PID_Update(PID*,float value, float dv);
 float PID_xUpdate(PID* pid,float value);

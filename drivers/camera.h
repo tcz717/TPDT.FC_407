@@ -16,12 +16,14 @@ enum
 	//	LINE_TURN_RIGHT_45,
 	LINE_TURN_RIGHT_90,
 	LINE_END,
-	LINE_LOSTfromLEFT,
-	LINE_LOSTfromRIGHT,
-	LINE_LOSTfromBOTTOM,
+//	LINE_LOSTfromLEFT,
+//	LINE_LOSTfromRIGHT,
+//	LINE_LOSTfromBOTTOM,
 	LINE_LOST_ERROR,
 };
 #define REPORT_PACKAGE_HEAD 0x23
+#pragma pack(push)
+#pragma pack(1)
 typedef struct
 {
 	uint8_t head;
@@ -38,12 +40,13 @@ typedef struct
 	//                  A
 	//                  A
 	//-90degree ←←←←←←←←A→→→→→→→→→→→→ +90degree
-	int8_t middle_error;
+	int16_t middle_error;
 	//离中心线的距离//负值代表线在飞机左边（即飞机需要左移）
 	uint8_t dummy1;
 	uint8_t dummy2;
 	uint8_t checksum;
 } report_package_type;
+#pragma pack(pop)
 
 union data_pack
 {

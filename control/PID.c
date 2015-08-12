@@ -4,10 +4,16 @@
 void PID_SetTarget(PID* pid,float value)
 {
 	pid->expect = value;
-//	pid->out = 0;
-//	pid->iv = 0;
-//	pid->dv=0;
-//	pid->ldv=0;
+}
+
+void PID_Reset(PID* pid)
+{
+	pid->out = 0;
+	pid->iv = 0;
+	pid->dv=0;
+	pid->outp=0;
+	pid->outi=0;
+	pid->outd=0;
 }
 float PID_Update(PID* pid,float value, float dv)
 {

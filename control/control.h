@@ -3,10 +3,12 @@
 #include <rtthread.h>
 #include "stm32f4xx.h"
 
-#define crBegin static int state=0; switch(state) { case 0:
-#define crReturn(x) do { state=__LINE__; return x; \
+#define tPre	static int state=0; 
+#define tReset state=0; 
+#define tBegin switch(state) { case 0:
+#define tReturn(x) do { state=__LINE__; return x; \
                          case __LINE__:; } while (0)
-#define crFinish }
+#define tFinish }
 
 typedef rt_err_t (*fc_func)(uint8_t var);
 
@@ -17,6 +19,7 @@ typedef struct
 	fc_func func;
 	rt_uint8_t var;
 	uint32_t depend;
+	rt_bool_t reset;
 }fc_task;
 
 extern rt_bool_t armed;

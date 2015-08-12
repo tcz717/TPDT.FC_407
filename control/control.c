@@ -39,12 +39,12 @@ rt_err_t mayday(u8 var){disarm(); return RT_EOK;}
 
 fc_task task[16]=
 {
-	0,"default",RT_NULL,0,SAFE_ADNS3080|SAFE_HMC5883|SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR,
-	1,"mayday",mayday,0,0,
-	2,"stable",stable_mode,0,SAFE_HMC5883|SAFE_MPU6050|SAFE_PWM,
-	3,"althold",althold_mode,50,SAFE_HMC5883|SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,
-	4,"loiter",loiter_mode,50,SAFE_ADNS3080|SAFE_HMC5883|SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,
-	255,"wait",wait_mode,0,0,
+	0,"default",RT_NULL,0,SAFE_ADNS3080|SAFE_HMC5883|SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA,RT_TRUE|SAFE_PWM,
+	1,"mayday",mayday,0,0,RT_TRUE,
+	2,"stable",stable_mode,0,SAFE_HMC5883|SAFE_MPU6050|SAFE_PWM,RT_TRUE,
+	3,"althold",althold_mode,50,SAFE_HMC5883|SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,RT_TRUE,
+	4,"loiter",loiter_mode,50,SAFE_ADNS3080|SAFE_HMC5883|SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,RT_TRUE,
+	255,"wait",wait_mode,0,0,RT_TRUE,
 };
 
 fc_task * current_task;
@@ -103,6 +103,7 @@ rt_bool_t excute_task(const char * name)
 		return RT_FALSE;
 	}
 	current_task=t;
+	current_task->reset=RT_TRUE;
 	rt_kprintf("start task %s.\n",t->name);
 	return RT_TRUE;
 }
@@ -319,6 +320,13 @@ void control_thread_entry(void* parameter)
 	}
 }
 
+rt_err_t hardfalt_protect(void * stack)
+{
+	Motor_Set(0,0,0,0);
+	disarm();
+	return RT_EOK;
+}
+
 void control_init()
 {
 	//default settings
@@ -359,6 +367,8 @@ void control_init()
 	PID_Set_Filt_Alpha(&x_d_pid, 1.0 / 100.0, 20.0);
 	PID_Set_Filt_Alpha(&y_d_pid, 1.0 / 100.0, 20.0);
 	PID_Set_Filt_Alpha(&h_pid, 1.0 / 60.0, 20.0);
+	
+	rt_hw_exception_install(hardfalt_protect);
 	
 	rt_thread_init(&control_thread,
 		"control",

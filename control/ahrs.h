@@ -37,6 +37,7 @@ extern struct ahrs_t
 	float height;
 	int32_t x;
 	int32_t y;
+	float line_err;
 	int32_t dx;
 	int32_t dy;
 	float time_span;
