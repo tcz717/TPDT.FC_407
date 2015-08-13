@@ -18,7 +18,8 @@ rt_err_t check_safe(rt_uint32_t checklist)
 		if(!(PWM1_Time>500&&PWM2_Time>500&&PWM3_Time>500&&PWM4_Time>500&&PWM5_Time>500))
 			return SAFE_PWM;
 	}
-	
+	if(ahrs_state.camera &&(checklist & SAFE_CARMERA))
+		return SAFE_CARMERA;
 	if(!tfrc_con && (checklist & SAFE_TFCR))
 		return SAFE_TFCR;
 	return 0;

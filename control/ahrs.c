@@ -96,9 +96,24 @@ void angle_fix()
 }
 FINSH_FUNCTION_EXPORT(angle_fix, fix mpu6050 acc )
 
-rt_inline float toRad(float degree)
+float toRad(float degree)
 {
 	return degree *3.14f / 180.0f;
+}
+
+float rangeYaw(float yaw)
+{
+	if (yaw > 360.0f)	yaw -= 360.0f;
+	if (yaw < 0.0f)		yaw += 360.0f;
+	return yaw;
+}
+
+float diffYaw(float yaw1,float yaw2)
+{
+	float yaw_err = yaw1 - yaw2;
+	if (yaw_err > 180.0f)yaw_err -= 360.0f;
+	if (yaw_err < -180.0f)yaw_err += 360.0f;
+	return yaw_err;
 }
 
 //=====================================================================================================

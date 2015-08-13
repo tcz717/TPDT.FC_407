@@ -62,6 +62,9 @@ typedef struct {
 	float q3;
 } Quaternion;
 
+float toRad(float degree);
+float rangeYaw(float yaw);
+float diffYaw(float yaw1,float yaw2);
 extern int16_t mpu_acc_x,mpu_acc_y,mpu_acc_z;
 extern int16_t mpu_gryo_pitch,mpu_gryo_roll,mpu_gryo_yaw;
 extern float MPU6050_Diff[];

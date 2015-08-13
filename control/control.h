@@ -23,6 +23,7 @@ typedef struct
 }fc_task;
 
 extern rt_bool_t armed;
+extern fc_task * current_task;
 
 void control_init(void);
 rt_err_t arm(rt_int32_t addtion);

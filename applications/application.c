@@ -189,9 +189,12 @@ u8 get_dmp()
 
 		ahrs.degree_roll = -asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3f + settings.angle_diff_roll;   //+ Pitch_error; // pitch
 		ahrs.degree_pitch = -atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3f + settings.angle_diff_pitch;  //+ Roll_error; // roll
-		if (!has_hmc5883)
-			ahrs.degree_yaw = atan2(2 * (q1*q2 + q0*q3), q0*q0 + q1*q1 - q2*q2 - q3*q3) * 57.3f;  //+ Yaw_error;
-
+//		if (!has_hmc5883)
+//			ahrs.degree_yaw = atan2(2 * (q1*q2 + q0*q3), q0*q0 + q1*q1 - q2*q2 - q3*q3) * 57.3f;  //+ Yaw_error;
+		
+		ahrs.degree_yaw+=ahrs.time_span*ahrs.gryo_yaw;
+		if (ahrs.degree_yaw > 360.0f)ahrs.degree_yaw -= 360.0f;
+		if (ahrs.degree_yaw < 0.0f)ahrs.degree_yaw += 360.0f;
 		ahrs.time_span = Timer4_GetSec();
 
 		if (en_out_ahrs)

@@ -51,13 +51,14 @@ extern int __bss_end;
 * Output         : None
 * Return         : None
 *******************************************************************************/
+extern rt_err_t disarm(void);
 void assert_failed(u8* file, u32 line)
 {
     rt_kprintf("\n\r Wrong parameter value detected on\r\n");
     rt_kprintf("       file  %s\r\n", file);
     rt_kprintf("       line  %d\r\n", line);
 
-    while (1) ;
+    while (1) disarm();
 }
 
 /**

@@ -11,8 +11,14 @@
 #include "control.h"
 
 ALIGN(RT_ALIGN_SIZE)
-static rt_uint8_t control_stack[1024];
+static rt_uint8_t control_stack[2048];
 static struct rt_thread control_thread;
+
+ALIGN(RT_ALIGN_SIZE)
+static rt_uint8_t watchdog_stack[512];
+static struct rt_thread watchdog_thread;
+
+struct rt_semaphore watchdog;
 
 u8 poscon = 0;
 PID p_rate_pid, r_rate_pid, y_rate_pid,
@@ -39,11 +45,14 @@ rt_err_t mayday(u8 var){disarm(); return RT_EOK;}
 
 fc_task task[16]=
 {
-	0,"default",RT_NULL,0,SAFE_ADNS3080|SAFE_HMC5883|SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA,RT_TRUE|SAFE_PWM,
+	0,"default",RT_NULL,0,SAFE_ADNS3080|SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
 	1,"mayday",mayday,0,0,RT_TRUE,
-	2,"stable",stable_mode,0,SAFE_HMC5883|SAFE_MPU6050|SAFE_PWM,RT_TRUE,
-	3,"althold",althold_mode,50,SAFE_HMC5883|SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,RT_TRUE,
-	4,"loiter",loiter_mode,50,SAFE_ADNS3080|SAFE_HMC5883|SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,RT_TRUE,
+	2,"stable",stable_mode,0,SAFE_MPU6050|SAFE_PWM,RT_TRUE,
+	3,"althold",althold_mode,50,SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,RT_TRUE,
+	4,"loiter",loiter_mode,50,SAFE_ADNS3080|SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,RT_TRUE,
+	5,"cruise",RT_NULL,1,SAFE_ADNS3080|SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
+	
+	254,"test",RT_NULL,0,SAFE_ADNS3080|SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
 	255,"wait",wait_mode,0,0,RT_TRUE,
 };
 
@@ -54,10 +63,22 @@ rt_err_t arm(rt_int32_t addtion)
 	rt_err_t err;
 	if(armed)
 		return RT_EOK;
-	if((err=check_safe(SAFE_MPU6050|SAFE_HMC5883|addtion))==RT_EOK)
+	PID_Reset(&p_angle_pid);
+	PID_Reset(&p_rate_pid);
+	PID_Reset(&r_angle_pid);
+	PID_Reset(&r_rate_pid);
+	PID_Reset(&y_angle_pid);
+	PID_Reset(&y_rate_pid);
+	PID_Reset(&h_pid);
+	PID_Reset(&x_d_pid);
+	PID_Reset(&x_v_pid);
+	PID_Reset(&y_d_pid);
+	PID_Reset(&y_v_pid);
+	if((err=check_safe(SAFE_MPU6050|addtion))==RT_EOK)
 	{
 		yaw_exp = ahrs.degree_yaw;
 		armed=RT_TRUE;
+		
 		rt_kprintf("armed.\n");
 		return RT_EOK;
 	}
@@ -78,10 +99,11 @@ rt_err_t disarm()
 	excute_task("wait");
 	return RT_EOK;
 }
+FINSH_FUNCTION_EXPORT(disarm, disarm motor);
 
 fc_task * find_task(const char * name)
 {	
-	for(int j=0;j<sizeof(task);j++)
+	for(int j=0;j<sizeof(task)/sizeof(fc_task);j++)
 	{
 		if(!rt_strcasecmp(name,task[j].name))
 		{
@@ -122,15 +144,15 @@ void stable(float pitch,float roll,float yaw)
 	PID_SetTarget(&r_rate_pid, -RangeValue(r_angle_pid.out, -80, 80));
 	PID_xUpdate(&r_rate_pid, ahrs.gryo_roll);
 	
-	if (rt_event_recv(&ahrs_event, AHRS_EVENT_HMC5883, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_NO, &dump) == RT_EOK)
-	{
+//	if (rt_event_recv(&ahrs_event, AHRS_EVENT_HMC5883, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_NO, &dump) == RT_EOK)
+//	{
 		yaw_err = ahrs.degree_yaw - yaw;
 		PID_SetTarget(&y_angle_pid, 0);
 		if (yaw_err > 180.0f)yaw_err -= 360.0f;
 		if (yaw_err < -180.0f)yaw_err += 360.0f;
 		PID_xUpdate(&y_angle_pid, yaw_err);
-		PID_SetTarget(&y_rate_pid, -RangeValue(y_angle_pid.out, -100, 100));
-	}
+		PID_SetTarget(&y_rate_pid, -RangeValue(y_angle_pid.out, -80, 80));
+//	}
 	PID_xUpdate(&y_rate_pid, ahrs.gryo_yaw);
 }
 
@@ -259,6 +281,7 @@ void wait_dmp()
 		for (j = 0;j < 200;j++)
 		{
 			get_dmp();
+			rt_sem_release(&watchdog);
 			rt_thread_delay(2);
 		}
 	}
@@ -320,7 +343,28 @@ void control_thread_entry(void* parameter)
 			if(current_task->func(current_task->var)!=RT_EOK)
 				disarm();
 		}
+		if(!armed)
+			Motor_Set(0,0,0,0);
+		rt_sem_release(&watchdog);
 		rt_thread_delay(2);
+	}
+}
+
+
+void watchdog_entry(void* parameter)
+{
+	while(1)
+	{
+		if(rt_sem_take(&watchdog,RT_TICK_PER_SECOND)!=RT_EOK)
+		{
+			rt_kprintf("watchdog timeout!!!!!.\n");
+			while(1)
+			{
+				Motor_Set(0,0,0,0);
+				disarm();
+				rt_thread_suspend(&control_thread);
+			}
+		}
 	}
 }
 
@@ -365,7 +409,7 @@ void control_init()
 	PID_Set_Filt_Alpha(&y_rate_pid, 1.0 / 166.0, 20.0);
 	PID_Set_Filt_Alpha(&p_angle_pid, 1.0 / 166.0, 20.0);
 	PID_Set_Filt_Alpha(&r_angle_pid, 1.0 / 166.0, 20.0);
-	PID_Set_Filt_Alpha(&y_angle_pid, 1.0 / 75.0, 20.0);
+	PID_Set_Filt_Alpha(&y_angle_pid, 1.0 / 166.0, 20.0);
 	PID_Set_Filt_Alpha(&x_v_pid, 1.0 / 100.0, 20.0);
 	PID_Set_Filt_Alpha(&y_v_pid, 1.0 / 100.0, 20.0);
 	PID_Set_Filt_Alpha(&x_d_pid, 1.0 / 100.0, 20.0);
@@ -374,13 +418,22 @@ void control_init()
 	
 	rt_hw_exception_install(hardfalt_protect);
 	
+	rt_sem_init(&watchdog,"watchdog",0,RT_IPC_FLAG_FIFO);
 	rt_thread_init(&control_thread,
 		"control",
 		control_thread_entry,
 		RT_NULL,
 		control_stack,
-		1024, 3, 5);
+		2048, 3, 5);
 	rt_thread_startup(&control_thread);
+//	
+	rt_thread_init(&watchdog_thread,
+		"watchdog",
+		watchdog_entry,
+		RT_NULL,
+		watchdog_stack,
+		512, 1, 1);
+	rt_thread_startup(&watchdog_thread);
 	
 	extern void line_register(void);
 	line_register();
