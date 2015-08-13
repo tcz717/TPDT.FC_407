@@ -129,27 +129,29 @@ turnl:
 	deg=0;
 	static float target;
 	target=rangeYaw(yaw-90.0f);
-	for(i=0;i<20;i++)
+	for(i=0;i<120;i++)
 	{
-		stable(4.0f,0,yaw);
+		stable(12.0f,0,yaw);
 		althold(50);
 		motor_hupdate(450);
 		tReturn(RT_EOK);
 	}
+	target=rangeYaw(yaw-90.0f);
 	rt_kprintf("turn left to %d.\n",(s16)target);
 	while(1)
 	{
 		float diff;
-		deg=linear(deg,0,90.0f,RT_TICK_PER_SECOND/2);
-		yaw=rangeYaw(target+90.0f-deg);
-		rt_kprintf("y:%d/%d\n",(s16)ahrs.degree_yaw,(s16)yaw);
+//		deg=linear(deg,0,15.0f,RT_TICK_PER_SECOND);
+//		yaw+=pwm.yaw*0.5f;//rangeYaw(target+15.0f-deg);
+//		yaw=rangeYaw(yaw);
+//		rt_kprintf("y:%d/%d\n",(s16)ahrs.degree_yaw,(s16)yaw);
 		diff=diffYaw(ahrs.degree_yaw,target);
-		if(diff<5.0f&&diff>-5.0f)
+		if(diff<30.0f&&diff>-30.0f)
 		{
 			yaw=target;
 			goto line;
 		}
-		stable(0.0f,0,yaw);
+		stable(0.0f,0.0f,target);
 		althold(50);
 		motor_hupdate(450);
 		tReturn(RT_EOK);
