@@ -45,14 +45,14 @@ rt_err_t mayday(u8 var){disarm(); return RT_EOK;}
 
 fc_task task[16]=
 {
-	0,"default",RT_NULL,0,SAFE_ADNS3080|SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
+	0,"default",RT_NULL,0,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
 	1,"mayday",mayday,0,0,RT_TRUE,
 	2,"stable",stable_mode,0,SAFE_MPU6050|SAFE_PWM,RT_TRUE,
 	3,"althold",althold_mode,50,SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,RT_TRUE,
 	4,"loiter",loiter_mode,50,SAFE_ADNS3080|SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,RT_TRUE,
-	5,"cruise",RT_NULL,1,SAFE_ADNS3080|SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
+	5,"cruise",RT_NULL,1,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
 	
-	254,"test",RT_NULL,0,SAFE_ADNS3080|SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
+	254,"test",RT_NULL,0,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
 	255,"wait",wait_mode,0,0,RT_TRUE,
 };
 
@@ -151,7 +151,7 @@ void stable(float pitch,float roll,float yaw)
 		if (yaw_err > 180.0f)yaw_err -= 360.0f;
 		if (yaw_err < -180.0f)yaw_err += 360.0f;
 		PID_xUpdate(&y_angle_pid, yaw_err);
-		PID_SetTarget(&y_rate_pid, -RangeValue(y_angle_pid.out, -80, 80));
+		PID_SetTarget(&y_rate_pid, -RangeValue(y_angle_pid.out, -100, 100));
 //	}
 	PID_xUpdate(&y_rate_pid, ahrs.gryo_yaw);
 }
@@ -374,6 +374,11 @@ rt_err_t hardfalt_protect(void * stack)
 	disarm();
 	return RT_EOK;
 }
+void assert_protect(const char * c1,const char * c2,rt_size_t size)
+{
+	Motor_Set(0,0,0,0);
+	disarm();
+}
 
 void control_init()
 {
@@ -417,6 +422,7 @@ void control_init()
 	PID_Set_Filt_Alpha(&h_pid, 1.0 / 60.0, 20.0);
 	
 	rt_hw_exception_install(hardfalt_protect);
+	rt_assert_set_hook(assert_protect);
 	
 	rt_sem_init(&watchdog,"watchdog",0,RT_IPC_FLAG_FIFO);
 	rt_thread_init(&control_thread,

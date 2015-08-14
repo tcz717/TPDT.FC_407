@@ -315,6 +315,25 @@ static void config_bt()
 	GPIO_SetBits(GPIOA, GPIO_Pin_8);
 }
 
+char log_buf[256]={0};
+int tlog(const char * fmt ,...)
+{
+    va_list args;
+	int i=0;
+	
+    va_start(args, fmt);
+	i=vsnprintf(log_buf,sizeof(log_buf),fmt,args);
+	va_end(args);
+	
+	return i;
+}
+static void print_log(void)
+{
+	if(log_buf[0])
+		rt_kprintf("%s\n",log_buf);
+	log_buf[0]='\0';
+}
+
 void rt_init_thread_entry(void* parameter)
 {
 	rt_components_init();
@@ -380,6 +399,8 @@ void rt_init_thread_entry(void* parameter)
 		correct_stack,
 		1024, 12, 1);
 	rt_thread_startup(&correct_thread);
+	
+	rt_thread_idle_sethook(print_log);
 
 	control_init();
 	

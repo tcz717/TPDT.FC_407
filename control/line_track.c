@@ -32,8 +32,9 @@ rt_err_t line_track(u8 var)
 	static uint8_t waitl;
 	static uint8_t stop;
 	static float left;
-	static float deg;
 	static int i;
+	static float target;
+	static int turn;
 	
 	tPre;
 	if(line_task->reset||cruise_task->reset)
@@ -48,13 +49,13 @@ rt_err_t line_track(u8 var)
 	h=0;
 	stop=0;
 	left=0;
-	deg=0;
+	turn=0;
 //takeoff:
 	rt_kprintf("takeoff.\n");
 	while(h<49.0f)//take off
 	{
-		h=linear(h,5.0f,50.0f,RT_TICK_PER_SECOND/2);
-		stable(0,0,yaw);
+		h=linear(h,5.0f,50.0f,RT_TICK_PER_SECOND*0.6f);
+		stable(0.5f,0,yaw);
 		
 		althold(50.0f);
 		
@@ -88,6 +89,7 @@ rt_err_t line_track(u8 var)
 //	}
 //	rt_kprintf("find line.\n");
 line: 
+	waitl=0;
 	while(1) //line track 
 	{
 		if (rt_event_recv(&ahrs_event, AHRS_EVENT_CARMERA, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_NO, &dump) == RT_EOK)
@@ -100,17 +102,25 @@ line:
 					PID_SetTarget(&pid.dist,0);
 					PID_xUpdate(&pid.dist,ahrs.line_err);
 					left*=0.5f;
+					waitl*=0.5f;
 				break;
 				case LINE_END:
 					stop=12;
+					if(waitl>=2.0f)
+						goto land;
 				case LINE_LOST_ERROR:
-					goto land;
+					waitl+=1.0f;
+					if(waitl>=6.0f)
+						goto land;
+					break;
 				case LINE_TURN_LEFT_90:
 					if(var==CRUISE_MODE)
 					{
 						left+=1.0f;
 						if(left>3.0f)
+						{
 							goto turnl;
+						}
 					}
 					break;
 				default:
@@ -119,17 +129,17 @@ line:
 			}
 		}
 //		float y=rangeYaw( yaw+ahrs.angle_err);
-		stable(-1.0f,RangeValue(pid.dist.out,-5,5),yaw);
+		stable(-2.0f,RangeValue(pid.dist.out,-8,8),yaw);
 		althold(50);
 		motor_hupdate(450);
 		
 		tReturn(RT_EOK);
 	}
 turnl:
-	deg=0;
-	static float target;
+	left=0;
+	turn++;
 	target=rangeYaw(yaw-90.0f);
-	for(i=0;i<120;i++)
+	for(i=0;i<80;i++)
 	{
 		stable(12.0f,0,yaw);
 		althold(50);
@@ -146,22 +156,27 @@ turnl:
 //		yaw=rangeYaw(yaw);
 //		rt_kprintf("y:%d/%d\n",(s16)ahrs.degree_yaw,(s16)yaw);
 		diff=diffYaw(ahrs.degree_yaw,target);
-		if(diff<30.0f&&diff>-30.0f)
+		if((diff<15.0f&&diff>-15.0f)||(diff<30.0f&&diff>-30.0f&&recv.pack.linestate==LINE_STRAIGHT))
 		{
 			yaw=target;
+			if(turn>=4)
+			{
+				stop=-1.0f;
+				goto land;
+			}
 			goto line;
 		}
-		stable(0.0f,0.0f,target);
-		althold(50);
+		stable(-3.0f,-2.5f,target);
+		althold(60);
 		motor_hupdate(450);
 		tReturn(RT_EOK);
 	}
 land:
 	rt_kprintf("land.\n");
 	h=450;
-	while(h>60.0f&&ahrs.height>10.0f)//land
+	while(h>60.0f&&ahrs.height>15.0f)//land
 	{
-		h=linear(h,450,50,RT_TICK_PER_SECOND);
+		h=linear(h,450,0,RT_TICK_PER_SECOND);
 		if(ahrs.height>20.0f)
 			stable(stop,0,yaw);
 		else
