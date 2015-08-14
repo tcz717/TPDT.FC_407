@@ -50,7 +50,8 @@ fc_task task[16]=
 	2,"stable",stable_mode,0,SAFE_MPU6050|SAFE_PWM,RT_TRUE,
 	3,"althold",althold_mode,50,SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,RT_TRUE,
 	4,"loiter",loiter_mode,50,SAFE_ADNS3080|SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,RT_TRUE,
-	5,"cruise",RT_NULL,1,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
+	5,"cruise",RT_NULL,4,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
+	5,"throw",RT_NULL,3,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
 	
 	254,"test",RT_NULL,0,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
 	255,"wait",wait_mode,0,0,RT_TRUE,
@@ -133,7 +134,7 @@ rt_bool_t excute_task(const char * name)
 void stable(float pitch,float roll,float yaw)
 {
 	float yaw_err;
-	rt_uint32_t dump;
+//	rt_uint32_t dump;
 	PID_SetTarget(&p_angle_pid,pitch);
 	PID_xUpdate(&p_angle_pid, ahrs.degree_pitch);
 	PID_SetTarget(&p_rate_pid, -RangeValue(p_angle_pid.out, -80, 80));
@@ -364,6 +365,12 @@ void watchdog_entry(void* parameter)
 				disarm();
 				rt_thread_suspend(&control_thread);
 			}
+		}
+		if (abs(ahrs.degree_pitch) > 45.0f || abs(ahrs.degree_roll) > 45.0f)
+		{
+			Motor_Set(0,0,0,0);
+			disarm();
+			rt_kprintf("degree out of range.\n");
 		}
 	}
 }
