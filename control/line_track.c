@@ -15,6 +15,16 @@ extern pwm_signal_t pwm;
 #define CRUISE_MODE		4
 #define THROW_MODE		3
 
+#define BASIC_THROTTLE 	470
+#define BASIC_HEIGHT 	50.0f
+#define TAKEOFF_TIME 	RT_TICK_PER_SECOND*0.4f
+#define LAND_TIME		RT_TICK_PER_SECOND/2
+#define LINE_STOP		12
+#define TURN_STOP		12.0f
+#define TURN_PITCH		-3.0f
+#define TURN_ROLL		-1.0f
+#define GO_PITCH		-2.0f
+
 fc_task * line_task;
 fc_task * cruise_task;
 fc_task * throw_task;
@@ -37,6 +47,7 @@ rt_err_t line_track(u8 var)
 	static int i;
 	static float target;
 	static int turn;
+	static int time;
 	
 	tPre;
 	if(current_task->reset)
@@ -53,10 +64,12 @@ rt_err_t line_track(u8 var)
 	turn=0;
 //takeoff:
 	rt_kprintf("takeoff.\n");
+	GPIO_WriteBit(GPIOE,GPIO_Pin_1,Bit_RESET);
+	GPIO_WriteBit(GPIOE,GPIO_Pin_2,Bit_SET);
 	while(h<49.0f)//take off
 	{
-		h=linear(h,5.0f,50.0f,RT_TICK_PER_SECOND*0.4f);
-		stable(1.0f,0,yaw);
+		h=linear(h,5.0f,70,RT_TICK_PER_SECOND*0.4f);
+		stable(0.0f,0,yaw);
 		
 		althold(50.0f);
 		
@@ -100,16 +113,28 @@ line:
 					if(waitl>=2.0f)
 					{
 						if(var==THROW_MODE)
+						{
+							GPIO_WriteBit(GPIOE,GPIO_Pin_2,Bit_RESET);
+							GPIO_WriteBit(GPIOE,GPIO_Pin_1,Bit_SET);
 							goto turnl;
+						}
 						goto land;
 					}
 				case LINE_LOST_ERROR:
-					waitl+=1.0f;
-					if(waitl>=25.0f)
+					if(abs(recv.pack.middle_error)>100)
+						waitl+=0.5f;
+					else
+						waitl+=1.0f;
+					if(waitl>=20.0f)
 						goto land;
 					break;
 				case LINE_TURN_LEFT_90:
-					if(var==CRUISE_MODE)
+					if(turn>=var&&var!=STRIGHT_MODE)
+					{
+						stop=12;
+						goto land;
+					}
+					if(var!=STRIGHT_MODE)
 					{
 						left+=1.0f;
 						if(left>3.0f)
@@ -124,21 +149,25 @@ line:
 			}
 		}
 //		float y=rangeYaw( yaw+ahrs.angle_err);
-		stable(-2.0f,RangeValue(pid.dist.out,-8,8),yaw);
-		althold(50);
-		motor_hupdate(450);
+		stable(-2.0f,RangeValue(pid.dist.out,-10,10),yaw);
+		althold(45);
+		motor_hupdate(BASIC_THROTTLE);
 		
 		tReturn(RT_EOK);
 	}
 turnl:
 	left=0;
 	turn++;
-	target=rangeYaw(yaw-90.0f);
-	for(i=0;i<80;i++)
+	rt_kprintf("stop at %d.\n",(u8)ahrs.height);
+	if(ahrs.height>38)
+		time=50;
+	else
+		time=80;
+	for(i=0;i<time;i++)
 	{
 		stable(12.0f,0,yaw);
-		althold(50);
-		motor_hupdate(450);
+		althold(55);
+		motor_hupdate(BASIC_THROTTLE);
 		tReturn(RT_EOK);
 	}
 	target=rangeYaw(yaw-90.0f);
@@ -152,23 +181,25 @@ turnl:
 			yaw=target;
 			goto line;
 		}
-		stable(-3.0f,-2.5f,target);
+		stable(-1.5f,RangeValue(pid.dist.out,-4,4)+TURN_ROLL,target);
 		althold(60);
-		motor_hupdate(450);
+		motor_hupdate(BASIC_THROTTLE);
 		tReturn(RT_EOK);
 	}
 land:
 	rt_kprintf("land %d.\n",(s16)stop);
-	h=450;
+	h=BASIC_THROTTLE;
 	while(h>60.0f&&ahrs.height>20.0f)//land
 	{
-		h=linear(h,450,0,RT_TICK_PER_SECOND);
+		h=linear(h,BASIC_THROTTLE,0,RT_TICK_PER_SECOND/2);
 		stable(stop,0,yaw);
 		
 		motor_update((u16)h);
 		
 		tReturn(RT_EOK);
 	}
+	GPIO_WriteBit(GPIOE,GPIO_Pin_2,Bit_RESET);
+	GPIO_WriteBit(GPIOE,GPIO_Pin_1,Bit_RESET);
 	tReturn(1);
 	tFinish
 	return 1;
@@ -334,6 +365,12 @@ void line_register()
 	gpio_init.GPIO_Pin=GPIO_Pin_0;
 	gpio_init.GPIO_PuPd=GPIO_PuPd_NOPULL;
 	GPIO_Init(GPIOE,&gpio_init);
+	gpio_init.GPIO_Mode=GPIO_Mode_OUT;
+	gpio_init.GPIO_Pin=GPIO_Pin_1|GPIO_Pin_2;
+	GPIO_Init(GPIOE,&gpio_init);
+	GPIO_WriteBit(GPIOE,GPIO_Pin_2,Bit_RESET);
+	GPIO_WriteBit(GPIOE,GPIO_Pin_1,Bit_RESET);
+	
 	
 	line_task=find_task("default");
 	cruise_task=find_task("cruise");

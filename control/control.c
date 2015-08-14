@@ -366,7 +366,7 @@ void watchdog_entry(void* parameter)
 				rt_thread_suspend(&control_thread);
 			}
 		}
-		if (abs(ahrs.degree_pitch) > 45.0f || abs(ahrs.degree_roll) > 45.0f)
+		if (armed && (abs(ahrs.degree_pitch) > 45.0f || abs(ahrs.degree_roll) > 45.0f))
 		{
 			Motor_Set(0,0,0,0);
 			disarm();
