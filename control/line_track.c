@@ -24,6 +24,7 @@ extern pwm_signal_t pwm;
 #define TURN_PITCH		-3.0f
 #define TURN_ROLL		-1.0f
 #define GO_PITCH		-2.0f
+#define V_EXPECT		-0.5f
 
 fc_task * line_task;
 fc_task * cruise_task;
@@ -36,6 +37,15 @@ struct line_pid
 	PID angle;
 	uint16_t ES;
 }pid;
+
+float cv=0;
+float Iv(float ve)
+{
+	cv=ahrs.degree_pitch*ahrs.time_span*9.8f;
+	PID_SetTarget(&pid.angle,ve);
+	PID_xUpdate(&pid.angle,cv);
+	return -RangeValue(pid.angle.out,-10,10);
+}
 
 rt_err_t line_track(u8 var)
 {
@@ -57,11 +67,13 @@ rt_err_t line_track(u8 var)
 	}
 	tBegin;
 	PID_Reset(&pid.dist);
+	PID_Reset(&pid.angle);
 	yaw=ahrs.degree_yaw;
 	h=0;
 	stop=0;
 	left=0;
 	turn=0;
+	cv=0;
 //takeoff:
 	rt_kprintf("takeoff.\n");
 	GPIO_WriteBit(GPIOE,GPIO_Pin_1,Bit_RESET);
@@ -69,7 +81,7 @@ rt_err_t line_track(u8 var)
 	while(h<49.0f)//take off
 	{
 		h=linear(h,5.0f,70,RT_TICK_PER_SECOND*0.4f);
-		stable(0.0f,0,yaw);
+		stable(Iv(V_EXPECT),0,yaw);
 		
 		althold(50.0f);
 		
@@ -149,7 +161,7 @@ line:
 			}
 		}
 //		float y=rangeYaw( yaw+ahrs.angle_err);
-		stable(-2.0f,RangeValue(pid.dist.out,-10,10),yaw);
+		stable(Iv(V_EXPECT),RangeValue(pid.dist.out,-10,10),yaw);
 		althold(45);
 		motor_hupdate(BASIC_THROTTLE);
 		
@@ -165,7 +177,7 @@ turnl:
 		time=80;
 	for(i=0;i<time;i++)
 	{
-		stable(12.0f,0,yaw);
+		stable(Iv(0),0,yaw);
 		althold(55);
 		motor_hupdate(BASIC_THROTTLE);
 		tReturn(RT_EOK);
@@ -179,9 +191,10 @@ turnl:
 		if((diff<10.0f&&diff>-10.0f)||(diff<30.0f&&diff>-30.0f&&recv.pack.linestate==LINE_STRAIGHT))
 		{
 			yaw=target;
+			cv=0;
 			goto line;
 		}
-		stable(-1.5f,RangeValue(pid.dist.out,-4,4)+TURN_ROLL,target);
+		stable(Iv(0),RangeValue(pid.dist.out,-4,4)+TURN_ROLL,target);
 		althold(60);
 		motor_hupdate(BASIC_THROTTLE);
 		tReturn(RT_EOK);
@@ -294,7 +307,7 @@ static void init_pid()
 			PID_Init(&pid.angle,0,0,0);
 			PID_Init(&pid.dist,0,0,0);
 			
-			PID_Set_Filt_Alpha(&pid.angle,1.0f/60.0f,20.0);
+			PID_Set_Filt_Alpha(&pid.angle,1.0f/166.0f,20.0);
 			PID_Set_Filt_Alpha(&pid.dist,1.0f/60.0f,20.0);
 
 			write(fd, &pid, sizeof(pid));
@@ -303,7 +316,7 @@ static void init_pid()
 		{
 			PID_Reset(&pid.angle);
 			PID_Reset(&pid.dist);
-			PID_Set_Filt_Alpha(&pid.angle,1.0f/60.0f,20.0);
+			PID_Set_Filt_Alpha(&pid.angle,1.0f/166.0f,20.0);
 			PID_Set_Filt_Alpha(&pid.dist,1.0f/60.0f,20.0);
 			rt_kprintf("line track pid load succeed.\n");
 		}
@@ -313,7 +326,7 @@ static void init_pid()
 	{
 		rt_kprintf("line track open wrong.\n");
 	}
-	rt_kprintf("line angle:		%d.%d	%d.%02d	%d.%03d.\n", (s32)pid.angle.p, (s32)(pid.angle.p*10.0f) % 10,
+	rt_kprintf("line angle:		%d.%03d	%d.%02d	%d.%03d.\n", (s32)pid.angle.p, (s32)(pid.angle.p*1000.0f) % 1000,
 	(s32)pid.angle.i, (s32)(pid.angle.i*100.0f) % 100,
 	(s32)pid.angle.d, (s32)(pid.angle.d*1000.0f) % 1000);
 	rt_kprintf("line dist :		%d.%03d	%d.%02d	%d.%03d.\n", (s32)pid.dist.p, (s32)(pid.dist.p*1000.0f) % 1000,
@@ -332,7 +345,7 @@ static void save_pid()
 		write(fd, &pid, sizeof(pid));
 		close(fd);
 	}
-	rt_kprintf("line angle:		%d.%d	%d.%02d	%d.%03d.\n", (s32)pid.angle.p, (s32)(pid.angle.p*10.0f) % 10,
+	rt_kprintf("line angle:		%d.%03d	%d.%02d	%d.%03d.\n", (s32)pid.angle.p, (s32)(pid.angle.p*1000.0f) % 1000,
 	(s32)pid.angle.i, (s32)(pid.angle.i*100.0f) % 100,
 	(s32)pid.angle.d, (s32)(pid.angle.d*1000.0f) % 1000);
 	rt_kprintf("line dist :		%d.%03d	%d.%02d	%d.%03d.\n", (s32)pid.dist.p, (s32)(pid.dist.p*1000.0f) % 1000,
@@ -342,7 +355,7 @@ static void save_pid()
 
 void set_la(s16 p, s16 i, s16 d)
 {
-	PID_Init(&pid.angle, p / 10.0f, i / 100.0f, d / 1000.0f);
+	PID_Init(&pid.angle, p / 1000.0f, i / 100.0f, d / 1000.0f);
 	save_pid();
 }
 FINSH_FUNCTION_EXPORT(set_la, set the value of pid in line track angle)
