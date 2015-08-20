@@ -7,6 +7,7 @@
 #include "math.h"
 #include "LED.h"
 extern pwm_signal_t pwm;
+extern PID h_pid;
 
 #define PID_SS 0xABCD
 #define PID_ES 0xDCBA
@@ -85,7 +86,6 @@ rt_err_t line_track(u8 var)
 	tBegin;
 	PID_Reset(&pid.dist);
 	PID_Reset(&pid.angle);
-	yaw=ahrs.degree_yaw;
 	h=0;
 	stop=0;
 	left=0;
@@ -100,6 +100,8 @@ rt_err_t line_track(u8 var)
 		LED3(1);
 		tReturn(RT_EOK);
 	}
+	
+	yaw=ahrs.degree_yaw;
 	LED3(0);
 	while(time>0)
 	{
@@ -112,16 +114,17 @@ rt_err_t line_track(u8 var)
 	rt_kprintf("takeoff.\n");
 	GPIO_WriteBit(GPIOE,GPIO_Pin_1,Bit_RESET);
 	GPIO_WriteBit(GPIOE,GPIO_Pin_2,Bit_SET);
-	while(h<49.0f)//take off
+	while(ahrs.height<49.0f&&h<145.0f)//take off
 	{
 		Ix();
 		Iy();
-		h=linear(h,5.0f,70,RT_TICK_PER_SECOND*0.4f);
+		h=linear(h,5.0f,150,RT_TICK_PER_SECOND*1.5f);
 		stable(-1.5f,0,yaw);
 		
-		althold(45.0f);
+		h_pid.maxi=50;
+		althold(55.0f);
 		
-		motor_hupdate(400+(u16)h);
+		motor_hupdate(450+(u16)h);
 		
 //		rt_kprintf("%d/%d\n",(u8)ahrs.height,(u8)h);
 		
@@ -220,7 +223,7 @@ line:
 		{
 			stable(-1.0,RangeValue(pid.dist.out,-10,10),yaw);
 		}
-		althold(50.0f/cos(toRad(ahrs.degree_roll)));
+		althold(60.0f);
 		motor_hupdate(BASIC_THROTTLE);
 		
 		tReturn(RT_EOK);

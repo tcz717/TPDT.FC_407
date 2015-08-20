@@ -44,7 +44,7 @@ float PID_xUpdate(PID* pid,float value)
 	pid->outd = pid->dv * pid->d;
 
 	pid->outp=pid->outp;
-	pid->outi=RangeValue(pid->outi,-50,+50);
+	pid->outi=RangeValue(pid->outi,-pid->maxi,+pid->maxi);
 	pid->outd=RangeValue(pid->outd,-500,+500);
 	pid->out =RangeValue(pid->outp + pid->outi + pid->outd,-500,+500);
 	pid->input=value;
@@ -70,6 +70,7 @@ void PID_Init(PID* pid,float p,float i,float d)
 	pid->out = 0;
 	pid->iv = 0;
 	pid->dv=0;
+	pid->maxi=50;
 	pid->filt_alpha=1;
 }
 

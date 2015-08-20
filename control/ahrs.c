@@ -50,6 +50,37 @@ s16 MoveAve_WMA(volatile int16_t NewData, volatile int16_t *MoveAve_FIFO, u8 Sam
 
 	return AveData;
 }
+
+float MoveMid_TMP[128];
+float Moving_Median(volatile float NewData, volatile float *MoveMid_FIFO, u8 SampleNum)
+{
+	u8 i,j;
+	float t;
+	
+	for (i = 0; i < SampleNum - 1; i++)        
+		MoveMid_FIFO[i] = MoveMid_FIFO[i + 1];
+
+	MoveMid_FIFO[SampleNum - 1] = NewData;   
+	
+	for (i = 0; i < SampleNum; i++)        
+		MoveMid_TMP[i] = MoveMid_FIFO[i];
+		
+	for(i=0;i<SampleNum-1;i++)
+	{
+		for(j=0;j<(SampleNum-1-i);j++)
+		{
+			if(MoveMid_TMP[j] > MoveMid_TMP[j+1])
+			{
+				t = MoveMid_TMP[j];
+				MoveMid_TMP[j] = MoveMid_TMP[j+1];
+				MoveMid_TMP[j+1] = t;
+			}
+		}
+	}
+
+	return ( MoveMid_TMP[SampleNum/2] );
+}
+
 static float dt ;
 static void get_fps()
 {

@@ -206,10 +206,14 @@ void motor_update(u16 th)
 }
 void motor_hupdate(u16 th)
 {
-	Motor_Set1(th - p_rate_pid.out - r_rate_pid.out + y_rate_pid.out - h_pid.out);
-	Motor_Set2(th - p_rate_pid.out + r_rate_pid.out - y_rate_pid.out - h_pid.out);
-	Motor_Set3(th + p_rate_pid.out - r_rate_pid.out - y_rate_pid.out - h_pid.out);
-	Motor_Set4(th + p_rate_pid.out + r_rate_pid.out + y_rate_pid.out - h_pid.out);
+	float weight;
+	weight=th/400.0f;
+	weight=RangeValue(weight,0,1);
+	
+	Motor_Set1(th - p_rate_pid.out - r_rate_pid.out + y_rate_pid.out - weight*h_pid.out);
+	Motor_Set2(th - p_rate_pid.out + r_rate_pid.out - y_rate_pid.out - weight*h_pid.out);
+	Motor_Set3(th + p_rate_pid.out - r_rate_pid.out - y_rate_pid.out - weight*h_pid.out);
+	Motor_Set4(th + p_rate_pid.out + r_rate_pid.out + y_rate_pid.out - weight*h_pid.out);
 }
 
 rt_err_t stable_mode(u8 var)
@@ -231,7 +235,7 @@ rt_err_t stable_mode(u8 var)
 
 rt_err_t althold_mode(u8 height)
 {
-	const u16 basic_thought=450;
+	const u16 basic_thought=530;
 	if (pwm.throttle  > 0.3f && abs(ahrs.degree_pitch) < 40 && abs(ahrs.degree_roll) < 40)
 	{
 		yaw_exp+=pwm.yaw*0.5f;
@@ -432,6 +436,8 @@ void control_init()
 	PID_Set_Filt_Alpha(&x_d_pid, 1.0 / 100.0, 20.0);
 	PID_Set_Filt_Alpha(&y_d_pid, 1.0 / 100.0, 20.0);
 	PID_Set_Filt_Alpha(&h_pid, 1.0 / 60.0, 20.0);
+	
+	h_pid.maxi=300;
 	
 	rt_hw_exception_install(hardfalt_protect);
 	rt_assert_set_hook(assert_protect);

@@ -22,12 +22,16 @@ void ahrs_put_mpu6050(s16 * data);
 void ahrs_update(void);
 s16 MoveAve_SMA(volatile int16_t NewData, volatile int16_t *MoveAve_FIFO, u8 SampleNum);
 s16 MoveAve_WMA(volatile int16_t NewData, volatile int16_t *MoveAve_FIFO, u8 SampleNum);
+float Moving_Median(volatile float NewData, volatile float *MoveMid_FIFO, u8 SampleNum);
 extern struct rt_event ahrs_event;
 extern struct ahrs_t
 {
 	float acc_x;
 	float acc_y;
 	float acc_z;
+	float g_x;
+	float g_y;
+	float g_z;
 	float gryo_pitch;
 	float gryo_roll;
 	float gryo_yaw;

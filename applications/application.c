@@ -72,6 +72,7 @@ static volatile Quaternion curq = { 1.0,0.0,0.0,0.0 };
 #define DEFAULT_MPU_HZ  (200)
 #define q30  1073741824.0f
 const float gyroscale = 2000;
+const float accscale = 2;
 unsigned long sensor_timestamp;
 unsigned char more;
 long quat[4];
@@ -184,13 +185,17 @@ u8 get_dmp()
 		mpu_gryo_roll = MoveAve_WMA(gyro[1], MPU6050_GYR_FIFO[1], 8);
 		mpu_gryo_yaw = MoveAve_WMA(gyro[2], MPU6050_GYR_FIFO[2], 8);
 		
-		ahrs.acc_x=accel[0]/1500.0f-0.30f;
-		ahrs.acc_y=accel[1]/1500.0f+0.60f;
-		ahrs.acc_z=accel[2]/1500.0f;
+		ahrs.acc_x=accel[0]*accscale / 32767.0f;
+		ahrs.acc_y=accel[1]*accscale / 32767.0f;
+		ahrs.acc_z=accel[2]*accscale / 32767.0f;
 
 		ahrs.gryo_pitch = -mpu_gryo_pitch 	* gyroscale / 32767.0f;
 		ahrs.gryo_roll = -mpu_gryo_roll 	* gyroscale / 32767.0f;
 		ahrs.gryo_yaw = -mpu_gryo_yaw 	* gyroscale / 32767.0f;
+		
+		ahrs.g_x = 2*(q1*q3 - q0*q2);
+		ahrs.g_y = 2*(q0*q1 + q2*q3);
+		ahrs.g_z = 1 - 2*(q1*q1 + q2*q2);
 
 		ahrs.degree_roll = -asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3f + settings.angle_diff_roll;   //+ Pitch_error; // pitch
 		ahrs.degree_pitch = -atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3f + settings.angle_diff_pitch;  //+ Roll_error; // roll

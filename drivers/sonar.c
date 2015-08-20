@@ -11,7 +11,7 @@ ALIGN(RT_ALIGN_SIZE)
 static rt_uint8_t sonar_stack[ 512 ];
 static struct rt_thread sonar_thread;
 
-s16 sonar_avr[SAMPLE_COUNT]={0};
+float sonar_avr[SAMPLE_COUNT]={0};
 u8 sonar_state=0;
 
 float sonar_h;
@@ -31,7 +31,7 @@ void sonar_thread_entry(void* parameter)
 		
 		rt_thread_delay(RT_TICK_PER_SECOND*50/1000);
 		
-		sonar_h=MoveAve_WMA(PWM8_Time,sonar_avr,SAMPLE_COUNT)/58.0f;
+		sonar_h=Moving_Median(PWM8_Time/58.0f*ahrs.g_z,sonar_avr,SAMPLE_COUNT);
 		ahrs.height=sonar_h;
 		h=(u16)sonar_h;
 		sonar_state=sonar_h>3.0f&&sonar_h<150.0f;

@@ -19,6 +19,7 @@ typedef struct
 	float dv;
 	float filt_alpha;
 	float dt;
+	float maxi;
 }PID;
 
 void PID_Reset(PID* pid);
