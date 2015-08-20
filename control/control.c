@@ -45,13 +45,13 @@ rt_err_t mayday(u8 var){disarm(); return RT_EOK;}
 
 fc_task task[16]=
 {
-	0,"default",RT_NULL,0,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
+	0,"default",RT_NULL,0,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA,RT_TRUE,
 	1,"mayday",mayday,0,0,RT_TRUE,
 	2,"stable",stable_mode,0,SAFE_MPU6050|SAFE_PWM,RT_TRUE,
 	3,"althold",althold_mode,50,SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,RT_TRUE,
 	4,"loiter",loiter_mode,50,SAFE_ADNS3080|SAFE_MPU6050|SAFE_SONAR|SAFE_PWM,RT_TRUE,
-	5,"cruise",RT_NULL,4,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
-	5,"throw",RT_NULL,3,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
+	5,"cruise",RT_NULL,4,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA,RT_TRUE,
+	5,"throw",RT_NULL,3,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA,RT_TRUE,
 	
 	254,"test",RT_NULL,0,SAFE_MPU6050|SAFE_SONAR|SAFE_TFCR|SAFE_CARMERA|SAFE_PWM,RT_TRUE,
 	255,"wait",wait_mode,0,0,RT_TRUE,
@@ -134,7 +134,6 @@ rt_bool_t excute_task(const char * name)
 void stable(float pitch,float roll,float yaw)
 {
 	float yaw_err;
-//	rt_uint32_t dump;
 	PID_SetTarget(&p_angle_pid,pitch);
 	PID_xUpdate(&p_angle_pid, ahrs.degree_pitch);
 	PID_SetTarget(&p_rate_pid, -RangeValue(p_angle_pid.out, -80, 80));
@@ -145,15 +144,13 @@ void stable(float pitch,float roll,float yaw)
 	PID_SetTarget(&r_rate_pid, -RangeValue(r_angle_pid.out, -80, 80));
 	PID_xUpdate(&r_rate_pid, ahrs.gryo_roll);
 	
-//	if (rt_event_recv(&ahrs_event, AHRS_EVENT_HMC5883, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_NO, &dump) == RT_EOK)
-//	{
-		yaw_err = ahrs.degree_yaw - yaw;
-		PID_SetTarget(&y_angle_pid, 0);
-		if (yaw_err > 180.0f)yaw_err -= 360.0f;
-		if (yaw_err < -180.0f)yaw_err += 360.0f;
-		PID_xUpdate(&y_angle_pid, yaw_err);
-		PID_SetTarget(&y_rate_pid, -RangeValue(y_angle_pid.out, -100, 100));
-//	}
+	yaw_err = ahrs.degree_yaw - yaw;
+	PID_SetTarget(&y_angle_pid, 0);
+	if (yaw_err > 180.0f)yaw_err -= 360.0f;
+	if (yaw_err < -180.0f)yaw_err += 360.0f;
+	PID_xUpdate(&y_angle_pid, yaw_err);
+	PID_SetTarget(&y_rate_pid, -RangeValue(y_angle_pid.out, -100, 100));
+	
 	PID_xUpdate(&y_rate_pid, ahrs.gryo_yaw);
 }
 
@@ -163,7 +160,6 @@ void althold(float height)
 	if(check_safe(SAFE_SONAR)) 
 	{ 
 		h_pid.out = 0; 
-		LED4(0); 
 		return ;
 	} 
 	
@@ -173,7 +169,6 @@ void althold(float height)
 		PID_xUpdate(&h_pid, ahrs.height); 
 		h_pid.out = RangeValue(h_pid.out, -200, 200); 
 	} 
-	LED4(4); 
 }
 
 void loiter(float x,float y,float yaw)
@@ -199,7 +194,6 @@ void loiter(float x,float y,float yaw)
 		PID_xUpdate(&x_v_pid, ahrs.dx);
 		PID_xUpdate(&y_v_pid, ahrs.dy);
 	}
-	LED4(2);
 	stable(+RangeValue(y_v_pid.out, -10, 10) ,-RangeValue(x_v_pid.out, -10, 10),yaw);
 }
 
@@ -316,11 +310,14 @@ void control_thread_entry(void* parameter)
 		{
 			arm(SAFE_PWM);
 		}
-		if(pwm.switch1==2||pwm.switch1==-1||check_safe(current_task->depend))
+		if((((pwm.switch1==2||pwm.switch1==-1) 
+			&&(GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_3)==Bit_RESET||GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_4)==Bit_RESET)
+			)||check_safe(current_task->depend))
+			)
 		{
 			disarm();
 		}
-
+		
 		if (get_dmp() && armed)
 		{
 			if(check_safe(SAFE_PWM)==RT_EOK&&check_safe(SAFE_TFCR)!=RT_EOK)
@@ -389,6 +386,14 @@ void assert_protect(const char * c1,const char * c2,rt_size_t size)
 
 void control_init()
 {
+	GPIO_InitTypeDef gpio_init;
+	
+	GPIO_StructInit(&gpio_init);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE,ENABLE);
+	gpio_init.GPIO_Mode=GPIO_Mode_IN;
+	gpio_init.GPIO_Pin=GPIO_Pin_0|GPIO_Pin_3|GPIO_Pin_4;
+	gpio_init.GPIO_PuPd=GPIO_PuPd_DOWN;
+	GPIO_Init(GPIOE,&gpio_init);
 	//default settings
 	PID_Init(&p_rate_pid, 0, 0, 0);
 	PID_Init(&r_rate_pid, 0, 0, 0);

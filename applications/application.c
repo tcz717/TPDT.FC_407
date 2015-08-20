@@ -132,6 +132,7 @@ static void run_self_test(void)
 		accel[2] *= accel_sens;
 		dmp_set_accel_bias(accel);
 	}
+	rt_kprintf("dmp self check 0x%02X.\n",result);
 }
 void dmp_init()
 {
@@ -182,6 +183,10 @@ u8 get_dmp()
 		mpu_gryo_pitch = MoveAve_WMA(gyro[0], MPU6050_GYR_FIFO[0], 8);
 		mpu_gryo_roll = MoveAve_WMA(gyro[1], MPU6050_GYR_FIFO[1], 8);
 		mpu_gryo_yaw = MoveAve_WMA(gyro[2], MPU6050_GYR_FIFO[2], 8);
+		
+		ahrs.acc_x=accel[0]/1500.0f-0.30f;
+		ahrs.acc_y=accel[1]/1500.0f+0.60f;
+		ahrs.acc_z=accel[2]/1500.0f;
 
 		ahrs.gryo_pitch = -mpu_gryo_pitch 	* gyroscale / 32767.0f;
 		ahrs.gryo_roll = -mpu_gryo_roll 	* gyroscale / 32767.0f;
