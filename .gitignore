@@ -29,3 +29,6 @@
 *.sln
 *.vcxproj
 *.uvproj.*
+*.pyc
+.sconsign.dblite
+build
