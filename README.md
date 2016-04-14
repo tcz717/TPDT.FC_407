@@ -1,5 +1,5 @@
 # TPDT.FlightController
-A quadcopter control platform based on stm32f407.
+A quadcopter control platform based on `stm32f407` and `rt-thread`.
 
 ### Features
 * Basic PID framework
