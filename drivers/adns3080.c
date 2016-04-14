@@ -190,6 +190,11 @@ void adns3080_thread_entry(void* parameter)
 
 		opx += optc_dx;
 		opy += optc_dy;
+		
+		ahrs.x=opx;
+		ahrs.y=opy;
+		ahrs.dx=optc_dx*0.5f+ahrs.dx*0.5f;
+		ahrs.dy=optc_dy*0.5f+ahrs.dy*0.5f;
 
 		//		if((!(data[0]&0x10))&&(data[0]&0x80))
 		//		{
@@ -207,7 +212,7 @@ rt_err_t adns3080_Init(void)
 
 	timer_init(TIM6);
 
-	if (rt_spi_bus_attach_device(&spi_adns3080, "cs_d03", "spi3", &adns3080_select_cs) != RT_EOK)
+	if (rt_spi_bus_attach_device(&spi_adns3080, "cs_d00", "spi3", &adns3080_select_cs) != RT_EOK)
 	{
 		rt_kprintf("cs_d03 device attach wrong!\r\n");
 		has_adns3080 = RT_FALSE;
@@ -264,6 +269,6 @@ rt_err_t adns3080_Init(void)
 
 	rt_thread_startup(adns3080_thread);
 	has_adns3080 = RT_TRUE;
-
+	ahrs_state.adns3080=RT_EOK;
 	return RT_EOK;
 }

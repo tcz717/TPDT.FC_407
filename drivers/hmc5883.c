@@ -11,7 +11,7 @@
 #define	SCL2_Pin GPIO_Pin_10
 #define delay_us(i) I2C_delay()
 #define SAMPLE_COUNT 6
-#define yaw_a 0.6f
+#define yaw_a 0.9f
  
 #define   IIC_SDA_1     GPIOB->BSRRL = SDA2_Pin     
 #define   IIC_SDA_0     GPIOB->BSRRH  = SDA2_Pin    
@@ -301,7 +301,6 @@ s16 hmc5883_avr[3][SAMPLE_COUNT]={0};
 
 s16 mag;
 FINSH_VAR_EXPORT(mag,finsh_type_short,mag angle of yaw);
-
 void hmc5883_thread_entry(void* parameter)
 {
 	rt_kprintf("start hmc5883\n");
@@ -331,6 +330,17 @@ void hmc5883_thread_entry(void* parameter)
 			mag_x=MoveAve_WMA(mag_x,hmc5883_avr[0],SAMPLE_COUNT);
 			mag_y=MoveAve_WMA(mag_y,hmc5883_avr[1],SAMPLE_COUNT);
 			mag_z=MoveAve_WMA(mag_z,hmc5883_avr[2],SAMPLE_COUNT);
+			
+//			float xf,yf;
+//			xf=mag_x*cos(toRad(-ahrs.degree_roll))+mag_z*sin(toRad(-ahrs.degree_roll));
+//			yf=mag_y*cos(toRad(ahrs.degree_pitch))+mag_x*sin(toRad(ahrs.degree_pitch))*sin(toRad(-ahrs.degree_roll))
+//				-mag_z*cos(toRad(-ahrs.degree_roll))*sin(toRad(ahrs.degree_pitch));
+//			xf=-mag_x*cos(toRad(ahrs.degree_pitch))-mag_z*sin(toRad(ahrs.degree_pitch));
+//			yf=mag_y*cos(toRad(-ahrs.degree_roll))-mag_x*sin(toRad(-ahrs.degree_roll))*sin(toRad(ahrs.degree_pitch))
+//				+mag_z*cos(toRad(ahrs.degree_pitch))*sin(toRad(-ahrs.degree_roll));
+////			
+//			mag_x=mag_x/cos(toRad(ahrs.degree_pitch));
+//			mag_y=mag_y/cos(toRad(ahrs.degree_roll));
 			
 			if(mag_x>0&&mag_y>0)
 			{
@@ -364,20 +374,21 @@ void hmc5883_thread_entry(void* parameter)
 			{
 				 mag_angle=180;		
 			}
-			if(ahrs.degree_yaw-mag_angle>360.0f*yaw_a)
-			{
-				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0f)+(1.0f-yaw_a)*(mag_angle+360.0f);
-				if(ahrs.degree_yaw>360.0f)
-					ahrs.degree_yaw-=360.0f;
-			}
-			else if (ahrs.degree_yaw-mag_angle<-360.0f*yaw_a)
-			{
-				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0f)+(1.0f-yaw_a)*(mag_angle-360.0f);
-				if(ahrs.degree_yaw<0.0f)
-					ahrs.degree_yaw+=360.0f;
-			}
-			else
-				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0f)+(1.0f-yaw_a)*mag_angle;
+//			mag_angle=mag_angle+sin(toRad(mag_angle))*ahrs.degree_pitch+sin(toRad(mag_angle))*ahrs.degree_roll;
+//			if(ahrs.degree_yaw-mag_angle>360.0f*yaw_a)
+//			{
+//				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0f)+(1.0f-yaw_a)*(mag_angle+360.0f);
+//				if(ahrs.degree_yaw>360.0f)
+//					ahrs.degree_yaw-=360.0f;
+//			}
+//			else if (ahrs.degree_yaw-mag_angle<-360.0f*yaw_a)
+//			{
+//				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0f)+(1.0f-yaw_a)*(mag_angle-360.0f);
+//				if(ahrs.degree_yaw<0.0f)
+//					ahrs.degree_yaw+=360.0f;
+//			}
+//			else
+//				ahrs.degree_yaw=yaw_a*(ahrs.degree_yaw+ahrs.gryo_yaw/75.0f)+(1.0f-yaw_a)*mag_angle;
 			mag=(s16)mag_angle;
 			
 			rt_event_send(&ahrs_event,AHRS_EVENT_HMC5883);
@@ -418,6 +429,7 @@ rt_err_t HMC5983_Init(void)          //³õÊ¼»¯HMC5983
 	}
 	
 	has_hmc5883=RT_TRUE;
+	ahrs_state.hmc5883=RT_EOK;
 	rt_thread_startup(hmc5883_thread);
 	
 	return RT_EOK;

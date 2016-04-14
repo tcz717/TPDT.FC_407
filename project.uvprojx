@@ -171,11 +171,11 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>4096</DriverSelection>
+            <DriverSelection>4100</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
-          <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash2>STLink\ST-LINKIII-KEIL.dll</Flash2>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -363,9 +363,9 @@
             <useXO>0</useXO>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,HSE_VALUE=8000000</Define>
+              <Define>RT_USING_ARM_LIBC, USE_STDPERIPH_DRIVER , HSE_VALUE=8000000</Define>
               <Undefine></Undefine>
-              <IncludePath>applications;.;drivers;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\CMSIS\ST\STM32F4xx\Include;Libraries\CMSIS\Include;..\rt-thread\include;..\rt-thread\libcpu\arm\cortex-m4;..\rt-thread\libcpu\arm\common;..\rt-thread\components\dfs\include;..\rt-thread\components\dfs\filesystems\elmfat;..\rt-thread\components\dfs\filesystems\romfs;..\rt-thread\components\drivers\include;..\rt-thread\components\drivers\spi;..\rt-thread\components\drivers\include;..\rt-thread\components\finsh;.\drivers\eMPL</IncludePath>
+              <IncludePath>applications;.;drivers;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\CMSIS\ST\STM32F4xx\Include;Libraries\CMSIS\Include;..\rt-thread\include;..\rt-thread\libcpu\arm\cortex-m4;..\rt-thread\libcpu\arm\common;..\rt-thread\components\dfs\include;..\rt-thread\components\dfs\filesystems\elmfat;..\rt-thread\components\dfs\filesystems\romfs;..\rt-thread\components\drivers\include;..\rt-thread\components\drivers\spi;..\rt-thread\components\drivers\include;..\rt-thread\components\finsh;..\rt-thread\components\libc\armlibc;.\drivers\eMPL;.\control</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -429,24 +429,24 @@
               <FilePath>drivers\Motor.c</FilePath>
             </File>
             <File>
-              <FileName>PID.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>drivers\PID.c</FilePath>
-            </File>
-            <File>
               <FileName>PWM.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\PWM.c</FilePath>
             </File>
             <File>
-              <FileName>ahrs.c</FileName>
+              <FileName>adns3080.c</FileName>
               <FileType>1</FileType>
-              <FilePath>drivers\ahrs.c</FilePath>
+              <FilePath>drivers\adns3080.c</FilePath>
             </File>
             <File>
               <FileName>board.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\board.c</FilePath>
+            </File>
+            <File>
+              <FileName>camera.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\camera.c</FilePath>
             </File>
             <File>
               <FileName>hardtimer.c</FileName>
@@ -484,9 +484,19 @@
               <FilePath>drivers\stm32_iic.c</FilePath>
             </File>
             <File>
+              <FileName>stm32_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\stm32_spi.c</FilePath>
+            </File>
+            <File>
               <FileName>stm32f4xx_it.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\stm32f4xx_it.c</FilePath>
+            </File>
+            <File>
+              <FileName>teditor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\teditor.c</FilePath>
             </File>
             <File>
               <FileName>usart.c</FileName>
@@ -504,14 +514,44 @@
               <FilePath>.\drivers\eMPL\inv_mpu_dmp_motion_driver.c</FilePath>
             </File>
             <File>
-              <FileName>adns3080.c</FileName>
+              <FileName>pwm_remote.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\drivers\adns3080.c</FilePath>
+              <FilePath>.\drivers\pwm_remote.c</FilePath>
             </File>
             <File>
-              <FileName>stm32_spi.c</FileName>
+              <FileName>remote.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\drivers\stm32_spi.c</FilePath>
+              <FilePath>.\drivers\remote.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Control</GroupName>
+          <Files>
+            <File>
+              <FileName>safe.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\control\safe.c</FilePath>
+            </File>
+            <File>
+              <FileName>ahrs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\control\ahrs.c</FilePath>
+            </File>
+            <File>
+              <FileName>control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\control\control.c</FilePath>
+            </File>
+            <File>
+              <FileName>PID.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\control\PID.c</FilePath>
+            </File>
+            <File>
+              <FileName>line_track.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\control\line_track.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -927,6 +967,21 @@
               <FileName>finsh_token.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\rt-thread\components\finsh\finsh_token.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>libc</GroupName>
+          <Files>
+            <File>
+              <FileName>mem_std.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\rt-thread\components\libc\armlibc\mem_std.c</FilePath>
+            </File>
+            <File>
+              <FileName>stubs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\rt-thread\components\libc\armlibc\stubs.c</FilePath>
             </File>
           </Files>
         </Group>
