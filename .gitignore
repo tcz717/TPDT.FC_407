@@ -32,3 +32,4 @@
 *.pyc
 .sconsign.dblite
 build
+*.swp
