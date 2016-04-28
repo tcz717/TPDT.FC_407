@@ -7,7 +7,7 @@
 #include "math.h"
 #include "LED.h"
 extern pwm_signal_t pwm;
-extern PID h_pid;
+extern PID h_v_pid;
 
 #define PID_SS 0xABCD
 #define PID_ES 0xDCBA
@@ -19,14 +19,14 @@ extern PID h_pid;
 #define THROW_MODE		2
 
 #define BASIC_THROTTLE 	530
-#define BASIC_HEIGHT 	50.0f
+#define BASIC_HEIGHT 	65.0f
 #define TAKEOFF_TIME 	RT_TICK_PER_SECOND*0.4f
 #define LAND_TIME		RT_TICK_PER_SECOND/2
-#define LINE_STOP		7
+#define LINE_STOP		3
 #define TURN_STOP		12.0f
 #define TURN_PITCH		-2.0f
 #define TURN_ROLL		-1.0f
-#define GO_PITCH		-1.5f
+#define GO_PITCH		-0.8f
 #define V_EXPECT		-0.25f
 
 fc_task * line_task;
@@ -114,15 +114,18 @@ rt_err_t line_track(u8 var)
 	rt_kprintf("takeoff.\n");
 	GPIO_WriteBit(GPIOE,GPIO_Pin_1,Bit_RESET);
 	GPIO_WriteBit(GPIOE,GPIO_Pin_2,Bit_SET);
-	while(ahrs.height<49.0f&&h<145.0f)//take off
+	while(ahrs.height<49.0f&&h<95.0f)//take off
 	{
 		Ix();
 		Iy();
-		h=linear(h,5.0f,150,RT_TICK_PER_SECOND*1.5f);
-		stable(-1.5f,0,yaw);
+		h=linear(h,5.0f,100,RT_TICK_PER_SECOND*0.7f);
+		stable(-2.5f,0,yaw);
 		
-		h_pid.maxi=50;
-		althold(55.0f);
+		h_v_pid.maxi=150;
+		if(var==THROW_MODE)
+			h_v_pid.maxi=300;
+		
+		althold(BASIC_HEIGHT);
 		
 		motor_hupdate(450+(u16)h);
 		
@@ -133,6 +136,8 @@ rt_err_t line_track(u8 var)
 	rt_uint32_t dump;
 line: 
 	waitl=0;
+	GPIO_WriteBit(GPIOE,GPIO_Pin_1,Bit_RESET);
+	GPIO_WriteBit(GPIOE,GPIO_Pin_2,Bit_SET);
 	while(1) //line track 
 	{
 		if (rt_event_recv(&ahrs_event, AHRS_EVENT_CARMERA, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_NO, &dump) == RT_EOK)
@@ -145,7 +150,7 @@ line:
 				case LINE_MARK:
 					if(turn>=var&&var==CRUISE_MODE)
 					{
-						stop=10;
+						stop=-1;
 						goto land;
 					}
 				case LINE_STRAIGHT:
@@ -161,20 +166,24 @@ line:
 //					}
 				break;
 				case LINE_END:
-					stop=12;
+					stop=3;
 					if(waitl>=2.0f)
 					{
-						if(var==THROW_MODE&&turn==0)
+						if(var==THROW_MODE)
 						{
-							GPIO_WriteBit(GPIOE,GPIO_Pin_2,Bit_RESET);
-							GPIO_WriteBit(GPIOE,GPIO_Pin_1,Bit_SET);
-							goto turnl;
+							stop=4;
+							if(turn==0)
+							{
+								GPIO_WriteBit(GPIOE,GPIO_Pin_2,Bit_RESET);
+								GPIO_WriteBit(GPIOE,GPIO_Pin_1,Bit_RESET);
+								goto turnl;
+							}
 						}
 						if(turn>=var)
 							goto land;
 					}
 				case LINE_LOST_ERROR:
-					stop=12;
+					stop=3;
 					if(abs(recv.pack.middle_error)>100)
 						waitl+=0.5f;
 					else
@@ -183,9 +192,9 @@ line:
 						goto land;
 					break;
 				case LINE_TURN_LEFT_90:
-					if(turn>=var&&var!=STRIGHT_MODE)
+					if(turn>=var&&var==CRUISE_MODE)
 					{
-						stop=12;
+						stop=-1;
 						goto land;
 					}
 					if(var!=STRIGHT_MODE)
@@ -217,31 +226,40 @@ line:
 					stable(GO_PITCH-GO_PITCH*turn/(var+1),RangeValue(pid.dist.out,-10,10),yaw);
 			}
 			else
-				stable(GO_PITCH/2,RangeValue(pid.dist.out,-10,10),yaw);
+				stable(GO_PITCH/3,RangeValue(pid.dist.out,-10,10),yaw);
 		}
 		else
 		{
 			stable(-1.0,RangeValue(pid.dist.out,-10,10),yaw);
 		}
-		althold(60.0f);
-		motor_hupdate(BASIC_THROTTLE);
+		althold(BASIC_HEIGHT);
+		
+		if(var==THROW_MODE&&turn==0)
+			motor_hupdate(BASIC_THROTTLE+30);
+		else
+			motor_hupdate(BASIC_THROTTLE);
+			
 		
 		tReturn(RT_EOK);
 	}
 turnl:
 	rt_kprintf("stop at %d.\n",(u8)ahrs.height);
-	extern PID h_pid;
-	if(turn==1&&var==THROW_MODE)
-		PID_Reset(&h_pid);
-	for(i=0;i<50;i++)
+	extern PID h_v_pid;
+	if(turn==0&&var==THROW_MODE)
+		PID_Reset(&h_v_pid);
+	for(i=0;i<80;i++)
 	{
 		Ix();
 		Iy();
-		stable(LINE_STOP,0,yaw);
+		if((turn==1||turn==3)&&var==CRUISE_MODE)
+			stable(LINE_STOP*2.0f,0,yaw);
+		else	
+			stable(LINE_STOP,0,yaw);
+		
 		if(var==THROW_MODE)
 			althold(40);
 		else
-			althold(55);
+			althold(BASIC_HEIGHT);
 		motor_hupdate(BASIC_THROTTLE);
 		GPIO_WriteBit(GPIOE,GPIO_Pin_2,Bit_RESET);
 		GPIO_WriteBit(GPIOE,GPIO_Pin_1,Bit_RESET);
@@ -275,15 +293,16 @@ dturnl:
 		}
 		if(var==THROW_MODE)
 		{
+			h_v_pid.maxi=150;
 			althold(40);
 			if(turn==1)
 				stable(2,0,target);
 			else
-				stable(-1.5f,-4.0f,target);
+				stable(-1.0f,-2.0f,target);
 		}
 		else
 		{
-			althold(60);
+			althold(BASIC_HEIGHT);
 			stable(TURN_PITCH,RangeValue(pid.dist.out,-3,3)+TURN_ROLL,target);
 		}
 		motor_hupdate(BASIC_THROTTLE);
@@ -291,13 +310,13 @@ dturnl:
 	}
 land:
 	rt_kprintf("land %d.\n",(s16)stop);
-	h=BASIC_THROTTLE;
-	while(h>60.0f&&ahrs.height>20.0f)//land
+	h=BASIC_HEIGHT;
+	while(h>5.0f&&ahrs.height>20.0f)//land
 	{
-		h=linear(h,BASIC_THROTTLE,0,RT_TICK_PER_SECOND/2);
+		h=linear(h,BASIC_HEIGHT,0,RT_TICK_PER_SECOND/2);
 		stable(stop,0,yaw);
 		
-		motor_update((u16)h);
+		motor_update(450);
 		
 		tReturn(RT_EOK);
 	}

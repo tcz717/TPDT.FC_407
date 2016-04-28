@@ -25,7 +25,8 @@ PID p_rate_pid, r_rate_pid, y_rate_pid,
 p_angle_pid, r_angle_pid, y_angle_pid;
 PID x_v_pid, y_v_pid,
 x_d_pid, y_d_pid;
-PID	h_pid;
+PID	h_v_pid;
+PID	h_d_pid;
 s16 pos_X, pos_y;
 
 static float yaw_exp;
@@ -70,7 +71,8 @@ rt_err_t arm(rt_int32_t addtion)
 	PID_Reset(&r_rate_pid);
 	PID_Reset(&y_angle_pid);
 	PID_Reset(&y_rate_pid);
-	PID_Reset(&h_pid);
+	PID_Reset(&h_v_pid);
+	PID_Reset(&h_d_pid);
 	PID_Reset(&x_d_pid);
 	PID_Reset(&x_v_pid);
 	PID_Reset(&y_d_pid);
@@ -159,15 +161,22 @@ void althold(float height)
 	rt_uint32_t dump;
 	if(check_safe(SAFE_SONAR)) 
 	{ 
-		h_pid.out = 0; 
+		h_v_pid.out = 0; 
 		return ;
 	} 
 	
 	if (rt_event_recv(&ahrs_event, AHRS_EVENT_SONAR, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_NO, &dump) == RT_EOK) 
 	{ 
-		PID_SetTarget(&h_pid, height); 
-		PID_xUpdate(&h_pid, ahrs.height); 
-		h_pid.out = RangeValue(h_pid.out, -200, 200); 
+//		PID_SetTarget(&h_v_pid, height); 
+//		PID_xUpdate(&h_v_pid, ahrs.height); 
+//		h_v_pid.out = RangeValue(h_v_pid.out, -200, 200); 
+		
+		PID_SetTarget(&h_d_pid,60.0f);
+		PID_xUpdate(&h_d_pid,ahrs.height);
+		
+		PID_SetTarget(&h_v_pid, -RangeValue(h_d_pid.out,-50,+50) ); 
+		PID_xUpdate(&h_v_pid, ahrs.height_v); 
+		h_v_pid.out = RangeValue(h_v_pid.out, -300, 300); 
 	} 
 }
 
@@ -210,10 +219,10 @@ void motor_hupdate(u16 th)
 	weight=th/400.0f;
 	weight=RangeValue(weight,0,1);
 	
-	Motor_Set1(th - p_rate_pid.out - r_rate_pid.out + y_rate_pid.out - weight*h_pid.out);
-	Motor_Set2(th - p_rate_pid.out + r_rate_pid.out - y_rate_pid.out - weight*h_pid.out);
-	Motor_Set3(th + p_rate_pid.out - r_rate_pid.out - y_rate_pid.out - weight*h_pid.out);
-	Motor_Set4(th + p_rate_pid.out + r_rate_pid.out + y_rate_pid.out - weight*h_pid.out);
+	Motor_Set1(th - p_rate_pid.out - r_rate_pid.out + y_rate_pid.out - weight*h_v_pid.out);
+	Motor_Set2(th - p_rate_pid.out + r_rate_pid.out - y_rate_pid.out - weight*h_v_pid.out);
+	Motor_Set3(th + p_rate_pid.out - r_rate_pid.out - y_rate_pid.out - weight*h_v_pid.out);
+	Motor_Set4(th + p_rate_pid.out + r_rate_pid.out + y_rate_pid.out - weight*h_v_pid.out);
 }
 
 rt_err_t stable_mode(u8 var)
@@ -284,6 +293,8 @@ void wait_dmp()
 			rt_thread_delay(2);
 		}
 	}
+	
+	ahrs.height_acc_fix=ahrs.height_acc;
 }
 
 float linear(float input,float start ,float end ,float time)
@@ -409,14 +420,15 @@ void control_init()
 	PID_Init(&y_v_pid, 0, 0, 0);
 	PID_Init(&x_d_pid, 0, 0, 0);
 	PID_Init(&y_d_pid, 0, 0, 0);
-	PID_Init(&h_pid, 0, 0, 0);
+	PID_Init(&h_v_pid, 0, 0, 0);
+	PID_Init(&h_d_pid, 1.5f, 0, 0.8f);
 
 	load_settings(&settings, "/setting", &p_angle_pid, &p_rate_pid
 		, &r_angle_pid, &r_rate_pid
 		, &y_angle_pid, &y_rate_pid
 		, &x_d_pid, &x_v_pid
 		, &y_d_pid, &y_v_pid
-		, &h_pid);
+		, &h_v_pid);
 	
 	settings.roll_min = settings.pitch_min = settings.yaw_min = 1017;
 	settings.th_min = 1017;
@@ -435,9 +447,10 @@ void control_init()
 	PID_Set_Filt_Alpha(&y_v_pid, 1.0 / 100.0, 20.0);
 	PID_Set_Filt_Alpha(&x_d_pid, 1.0 / 100.0, 20.0);
 	PID_Set_Filt_Alpha(&y_d_pid, 1.0 / 100.0, 20.0);
-	PID_Set_Filt_Alpha(&h_pid, 1.0 / 60.0, 20.0);
+	PID_Set_Filt_Alpha(&h_v_pid, 1.0 / 60.0, 20.0);
+	PID_Set_Filt_Alpha(&h_d_pid, 1.0 / 60.0, 20.0);
 	
-	h_pid.maxi=300;
+	h_v_pid.maxi=150;
 	
 	rt_hw_exception_install(hardfalt_protect);
 	rt_assert_set_hook(assert_protect);

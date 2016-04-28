@@ -169,6 +169,7 @@ void dmp_init()
 
 	rt_kprintf("start mpu6050\n");
 	
+	ahrs.height_acc_fix=0;
 	ahrs_state.mpu6050=RT_EOK;
 }
 u8 get_dmp()
@@ -193,12 +194,17 @@ u8 get_dmp()
 		ahrs.gryo_roll = -mpu_gryo_roll 	* gyroscale / 32767.0f;
 		ahrs.gryo_yaw = -mpu_gryo_yaw 	* gyroscale / 32767.0f;
 		
-		ahrs.g_x = 2*(q1*q3 - q0*q2);
-		ahrs.g_y = 2*(q0*q1 + q2*q3);
+		ahrs.g_x = -2*(q1*q3 - q0*q2);
+		ahrs.g_y = -2*(q0*q1 + q2*q3);
 		ahrs.g_z = 1 - 2*(q1*q1 + q2*q2);
+		
+		ahrs.height_acc=low_pass(ahrs.height_acc,
+		(ahrs.acc_x*ahrs.g_x+ahrs.acc_y*ahrs.g_y+ahrs.acc_z*ahrs.g_z-1.0f)*9.8f*100.0f-ahrs.height_acc_fix,20,1/166.0f);
 
 		ahrs.degree_roll = -asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3f + settings.angle_diff_roll;   //+ Pitch_error; // pitch
 		ahrs.degree_pitch = -atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3f + settings.angle_diff_pitch;  //+ Roll_error; // roll
+		
+		ahrs.vx+=cosf(toRad(ahrs.degree_pitch))*ahrs.acc_y*9.8f*ahrs.time_span;	
 //		if (!has_hmc5883)
 //			ahrs.degree_yaw = atan2(2 * (q1*q2 + q0*q3), q0*q0 + q1*q1 - q2*q2 - q3*q3) * 57.3f;  //+ Yaw_error;
 		

@@ -4,6 +4,7 @@
 #include "math.h"
 #include <rtthread.h>
 #include <finsh.h>
+#define PI 3.1415926
 struct ahrs_t ahrs;
 int16_t mpu_acc_x,mpu_acc_y,mpu_acc_z;
 int16_t mpu_gryo_pitch,mpu_gryo_roll,mpu_gryo_yaw;
@@ -145,6 +146,13 @@ float diffYaw(float yaw1,float yaw2)
 	if (yaw_err > 180.0f)yaw_err -= 360.0f;
 	if (yaw_err < -180.0f)yaw_err += 360.0f;
 	return yaw_err;
+}
+
+float low_pass(float ov,float nv,float hz,float dt)
+{
+	float rc = 1/(2*PI*hz);
+	float filt_alpha = dt / (dt + rc);
+	return ov + filt_alpha * (nv-ov);
 }
 
 //=====================================================================================================

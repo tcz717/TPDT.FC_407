@@ -7,7 +7,7 @@ extern PID p_rate_pid, r_rate_pid, y_rate_pid;
 extern PID p_angle_pid, r_angle_pid, y_angle_pid;
 extern PID x_v_pid, y_v_pid;
 extern PID x_d_pid, y_d_pid;
-extern PID h_pid;
+extern PID h_v_pid;
 
 struct setting_t settings;
 
@@ -168,9 +168,9 @@ void get_pid()
 		(s32)y_v_pid.i, (s32)(y_v_pid.i*100.0f) % 100,
 		(s32)y_v_pid.d, (s32)(y_v_pid.d*1000.0f) % 1000);
 
-	rt_kprintf("height	:		%d.%d	%d.%02d	%d.%03d.\n", (s32)h_pid.p, (s32)(h_pid.p*10.0f) % 10,
-		(s32)h_pid.i, (s32)(h_pid.i*100.0f) % 100,
-		(s32)h_pid.d, (s32)(h_pid.d*1000.0f) % 1000);
+	rt_kprintf("height	:		%d.%d	%d.%02d	%d.%03d.\n", (s32)h_v_pid.p, (s32)(h_v_pid.p*10.0f) % 10,
+		(s32)h_v_pid.i, (s32)(h_v_pid.i*100.0f) % 100,
+		(s32)h_v_pid.d, (s32)(h_v_pid.d*1000.0f) % 1000);
 }
 FINSH_FUNCTION_EXPORT(get_pid, show the value of pid)
 
@@ -256,11 +256,11 @@ FINSH_FUNCTION_EXPORT(set_y, set the value of pid in y axis)
 
 void set_height(s16 p, s16 i, s16 d)
 {
-	PID_Init(&h_pid, p / 10.0f, i / 100.0f, d / 1000.0f);
+	PID_Init(&h_v_pid, p / 10.0f, i / 100.0f, d / 1000.0f);
 
-	settings.h_p = h_pid.p;
-	settings.h_i = h_pid.i;
-	settings.h_d = h_pid.d;
+	settings.h_p = h_v_pid.p;
+	settings.h_i = h_v_pid.i;
+	settings.h_d = h_v_pid.d;
 
 	save_settings(&settings, "/setting");
 

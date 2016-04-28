@@ -39,12 +39,16 @@ extern struct ahrs_t
 	float degree_roll;
 	float degree_yaw;
 	float height;
+	float height_v;
+	float height_acc;
+	float height_acc_fix;
 	int32_t x;
 	int32_t y;
 	float line_err;
 	float angle_err;
 	int32_t dx;
 	int32_t dy;
+	float vx;
 	float time_span;
 }ahrs;
 
@@ -69,6 +73,7 @@ typedef struct {
 float toRad(float degree);
 float rangeYaw(float yaw);
 float diffYaw(float yaw1,float yaw2);
+float low_pass(float ov,float nv,float hz,float dt);
 extern int16_t mpu_acc_x,mpu_acc_y,mpu_acc_z;
 extern int16_t mpu_gryo_pitch,mpu_gryo_roll,mpu_gryo_yaw;
 extern float MPU6050_Diff[];
