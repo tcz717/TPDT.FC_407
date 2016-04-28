@@ -31,7 +31,7 @@
 #include "hmc5883.h"
 #include "inv_mpu.h"
 #include "inv_mpu_dmp_motion_driver.h"
-#include "LED.h"
+#include "led.h"
 #include "math.h"
 #include "Motor.h"
 #include "PID.h"
