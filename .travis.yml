@@ -3,6 +3,11 @@ language: c
 notifications:
   email: false
 
+branches:
+  only:
+    - master
+    - develop
+
 before_script:
 # travis has changed to 64-bit and we require 32-bit compatibility libraries
   - sudo apt-get update
