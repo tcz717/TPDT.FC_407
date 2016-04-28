@@ -82,7 +82,7 @@
 #define RT_USING_W25QXX
 #define RT_I2C_DEBUG
 //#define RT_USING_ARM_LIBC
-#define RT_USING_LIBC
+//#define RT_USING_LIBC
 
 /* SECTION: device filesystem */
 #define RT_USING_DFS
