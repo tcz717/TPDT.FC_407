@@ -22,11 +22,11 @@ extern PID h_v_pid;
 #define BASIC_HEIGHT 	65.0f
 #define TAKEOFF_TIME 	RT_TICK_PER_SECOND*0.4f
 #define LAND_TIME		RT_TICK_PER_SECOND/2
-#define LINE_STOP		3
+#define LINE_STOP		7
 #define TURN_STOP		12.0f
 #define TURN_PITCH		-2.0f
 #define TURN_ROLL		-1.0f
-#define GO_PITCH		-0.8f
+#define GO_PITCH		-1.5f
 #define V_EXPECT		-0.25f
 
 fc_task * line_task;
