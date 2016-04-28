@@ -73,10 +73,6 @@ int tscanf(const char * fmt, ...)
 	
 	return vsscanf(buf,fmt,args);
 }
-int putc(int c, FILE * stream)
-{
-	rt_device_write(device,0,&c,1);	
-}
 
 void ShowText()
 {
@@ -89,7 +85,7 @@ void ShowText()
 		if (ch == '\n')
 		{
 			line ++ ;
-			printf("\n%c%3d ", line == cur ? '#' : ' ', line);
+			rt_kprintf("\n%c%3d ", line == cur ? '#' : ' ', line);
 			continue;
 		}
 
@@ -149,7 +145,7 @@ void Editor(char * path)
 		promt();
 
 		tgets(input);
-		printf("%s\n",input);
+		rt_kprintf("%s\n",input);
 
 		parse(input);
 	}

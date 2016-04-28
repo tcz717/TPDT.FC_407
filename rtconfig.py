@@ -64,8 +64,8 @@ elif PLATFORM == 'armcc':
     LINK = 'armlink'
     TARGET_EXT = 'axf'
 
-    DEVICE = ' --cortex-m4.fp'
-    CFLAGS = DEVICE + ' -std=c99 --apcs=interwork -DUSE_STDPERIPH_DRIVER -DSTM32F40_41xxx'
+    DEVICE = ' --cpu=cortex-m4.fp'
+    CFLAGS = DEVICE + ' --c99 --apcs=interwork -DUSE_STDPERIPH_DRIVER -DSTM32F40_41xxx'
     AFLAGS = DEVICE
     LFLAGS = DEVICE + ' --info sizes --info totals --info unused --info veneers --list rtthread-stm32.map --scatter stm32_rom.sct'
 
