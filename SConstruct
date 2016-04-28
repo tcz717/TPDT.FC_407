@@ -5,11 +5,15 @@ import rtconfig
 if os.getenv('RTT_ROOT'):
     RTT_ROOT = os.getenv('RTT_ROOT')
 else:
-    RTT_ROOT = os.path.normpath(os.getcwd() + '/../rt-thread')
-
+    RTT_ROOT = os.path.normpath(os.getcwd() + '/rt-thread')
 
 sys.path = sys.path + [os.path.join(RTT_ROOT, 'tools')]
-from building import *
+try:
+    from building import *
+except:
+    print 'Cannot found RT-Thread root directory, please check RTT_ROOT'
+    print RTT_ROOT
+    exit(-1)
 
 TARGET = 'rtthread-stm32f4xx.' + rtconfig.TARGET_EXT
 
