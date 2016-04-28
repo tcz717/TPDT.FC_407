@@ -60,7 +60,7 @@
 /* SECTION: Device System */
 /* Using Device System */
 #define RT_USING_DEVICE
-
+#define RT_USING_DFS_DEVFS
 /* SECTION: Console options */
 #define RT_USING_CONSOLE
 #define RT_CONSOLE_DEVICE_NAME "uart3"
