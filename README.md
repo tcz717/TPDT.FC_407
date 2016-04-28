@@ -1,4 +1,5 @@
 # TPDT.FlightController
+[![Build Status](https://travis-ci.org/tcz717/TPDT.FC_407.svg?branch=master)](https://travis-ci.org/tcz717/TPDT.FC_407)
 A quadcopter control platform based on `stm32f407` and `rt-thread`.
 
 ### Features
