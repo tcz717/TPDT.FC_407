@@ -4,7 +4,7 @@
 #include <rthw.h>
 #include "safe.h"
 #include <components.h>
-#include "LED.h"
+#include "led.h"
 #include "settings.h"
 #include "pwm_remote.h"
 #include "Motor.h"

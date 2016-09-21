@@ -5,7 +5,7 @@
 #include <finsh.h>
 #include "pwm_remote.h"
 #include "math.h"
-#include "LED.h"
+#include "led.h"
 extern pwm_signal_t pwm;
 extern PID h_v_pid;
 

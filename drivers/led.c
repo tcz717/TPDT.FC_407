@@ -1,4 +1,4 @@
-#include "LED.h"
+#include "led.h"
 #include <rtthread.h>
 
 ALIGN(RT_ALIGN_SIZE)
