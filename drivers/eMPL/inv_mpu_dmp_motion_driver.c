@@ -24,7 +24,6 @@
 #include "inv_mpu_dmp_motion_driver.h"
 #include "dmpKey.h"
 #include "dmpmap.h"
-#include "Time.h"
 
 #define  MOTION_DRIVER_TARGET_MSP430
 /* The following functions must be defined for this platform:

@@ -73,10 +73,10 @@ int tscanf(const char * fmt, ...)
 	
 	return vsscanf(buf,fmt,args);
 }
-int putc(int c, FILE * stream)
-{
-	rt_device_write(device,0,&c,1);	
-}
+// int putc(int c, FILE * stream)
+// {
+// 	rt_device_write(device,0,&c,1);	
+// }
 
 void ShowText()
 {

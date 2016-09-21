@@ -99,6 +99,8 @@
 
 #define RT_USING_DFS_ROMFS
 
+#define RT_USING_DFS_DEVFS  
+
 /* the max number of mounted filesystem */
 #define DFS_FILESYSTEMS_MAX			2
 /* the max number of opened files 		*/
