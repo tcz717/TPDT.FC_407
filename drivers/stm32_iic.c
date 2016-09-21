@@ -2,18 +2,18 @@
 #include "stm32f4xx.h"                  // Device header
 #include <rtthread.h>
 
-#define  SCL_H         GPIOB->BSRRL = GPIO_Pin_6  
-#define  SCL_L         GPIOB->BSRRH = GPIO_Pin_6  
-#define  SDA_H         GPIOB->BSRRL = GPIO_Pin_7  
-#define  SDA_L         GPIOB->BSRRH = GPIO_Pin_7 
+#define  SCL_H         (GPIOB->BSRRL = GPIO_Pin_6)  
+#define  SCL_L         (GPIOB->BSRRH = GPIO_Pin_6)  
+#define  SDA_H         (GPIOB->BSRRL = GPIO_Pin_7)  
+#define  SDA_L         (GPIOB->BSRRH = GPIO_Pin_7) 
 
-#define  SCL_read      GPIOB->IDR  & GPIO_Pin_6  
-#define  SDA_read      GPIOB->IDR  & GPIO_Pin_7  
-
-
+#define  SCL_read      (GPIOB->IDR  & GPIO_Pin_6)
+#define  SDA_read      (GPIOB->IDR  & GPIO_Pin_7)  
 
 
-//IIC专用延时函数
+
+
+//IIC专锟斤拷锟斤拷时锟斤拷锟斤拷
 static void I2C_delay(void)
 {
     volatile int i = 30;
@@ -22,7 +22,7 @@ static void I2C_delay(void)
 }
 
  
-//IIC接口初始化
+//IIC锟接口筹拷始锟斤拷
 void i2cInit(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;

@@ -1,11 +1,13 @@
 #include "PID.h"
 #define PI 3.1415926
 
+//设定PID目标值
 void PID_SetTarget(PID* pid,float value)
 {
 	pid->expect = value;
 }
 
+//PID重置
 void PID_Reset(PID* pid)
 {
 	pid->out = 0;
@@ -15,6 +17,8 @@ void PID_Reset(PID* pid)
 	pid->outi=0;
 	pid->outd=0;
 }
+
+//含有微分值更新PID
 float PID_Update(PID* pid,float value, float dv)
 {
 	float p, i, d;
@@ -33,6 +37,8 @@ float PID_Update(PID* pid,float value, float dv)
 		pid->out=0;
 	return pid->out;
 }
+
+//无微分值更新PID
 extern struct ahrs_t ahrs;
 float PID_xUpdate(PID* pid,float value)
 {
@@ -50,6 +56,8 @@ float PID_xUpdate(PID* pid,float value)
 	pid->input=value;
 	return pid->out;
 }
+
+//约束取值范围
 float RangeValue(float value,float min,float max)
 {
 	if (value >= max)
@@ -59,6 +67,7 @@ float RangeValue(float value,float min,float max)
 	return value;
 }
 
+//初始化PID控制器
 void PID_Init(PID* pid,float p,float i,float d)
 {
 	pid->p=p;
@@ -74,6 +83,7 @@ void PID_Init(PID* pid,float p,float i,float d)
 	pid->filt_alpha=1;
 }
 
+//设定微分项低通滤波器参数
 void PID_Set_Filt_Alpha(PID* pid,float dt,float filt_hz)
 {
 	float rc = 1/(2*PI*filt_hz);
