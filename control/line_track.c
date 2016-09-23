@@ -16,27 +16,27 @@ extern PID h_v_pid;
 #define PID_PATH "/lt.pid"
 
 //三种巡线模式 实际上代表各自所需转弯次数
-#define STRIGHT_MODE	0
-#define CRUISE_MODE		4
-#define THROW_MODE		2
+#define STRIGHT_MODE        0
+#define CRUISE_MODE         4
+#define THROW_MODE          2
 
 //基础油门
-#define BASIC_THROTTLE 	530
+#define BASIC_THROTTLE      530
 //基础高度
-#define BASIC_HEIGHT 	65.0f
+#define BASIC_HEIGHT        65.0f
 //起飞时间（计数器上限）
-#define TAKEOFF_TIME 	RT_TICK_PER_SECOND*0.4f
+#define TAKEOFF_TIME        (RT_TICK_PER_SECOND*0.4f)
 //着陆时间（计数器上限）
-#define LAND_TIME		RT_TICK_PER_SECOND/2
+#define LAND_TIME           (RT_TICK_PER_SECOND/2)
 //直线减速倾角
-#define LINE_STOP		7
+#define LINE_STOP           7
 //转弯减速倾角
-#define TURN_STOP		12.0f
+#define TURN_STOP           12.0f
 //转弯时偏俯仰和翻滚 组合形成过山车式的转弯效果
-#define TURN_PITCH		-2.0f
-#define TURN_ROLL		-1.0f
+#define TURN_PITCH          -2.0f
+#define TURN_ROLL           -1.0f
 //前进俯仰角
-#define GO_PITCH		-1.5f
+#define GO_PITCH            -1.5f
 
 fc_task * line_task;
 fc_task * cruise_task;
@@ -55,11 +55,11 @@ struct line_pid
 float vx=0,vy=0;
 void Ix()
 {
-    vx+=cosf(toRad(ahrs.degree_pitch))*ahrs.acc_y*ahrs.time_span;	
+    vx+=cosf(toRad(ahrs.degree_pitch))*ahrs.acc_y*ahrs.time_span;    
 }
 void Iy()
 {
-    vy+=sinf(toRad(ahrs.degree_roll))*ahrs.time_span;	
+    vy+=sinf(toRad(ahrs.degree_roll))*ahrs.time_span;    
 }
 
 /*
@@ -139,7 +139,7 @@ rt_err_t line_track(u8 mode)
         
         motor_hupdate(450+(u16)target_height);
 #ifdef OUTPUT_LINETRACK_HEIGHT        
-		rt_kprintf("%d/%d\n",(u8)ahrs.height,(u8)target_height);
+        rt_kprintf("%d/%d\n",(u8)ahrs.height,(u8)target_height);
 #endif
         
         tReturn(RT_EOK);
@@ -275,7 +275,7 @@ prepare_turn:
         Iy();
         if((turn_cnt==1||turn_cnt==3)&&mode==CRUISE_MODE)
             stable(LINE_STOP*2.0f,0,current_yaw);
-        else	
+        else    
             stable(LINE_STOP,0,current_yaw);
         
         if(mode==THROW_MODE)
@@ -304,7 +304,7 @@ turn_left:
         //检测到直线立马退出
         if((diff<10.0f&&diff>-10.0f)||(diff<30.0f&&diff>-30.0f&&recv.pack.linestate==LINE_STRAIGHT))
         {
-            current_yaw=target_yaw;			
+            current_yaw=target_yaw;            
             vx=0;
             //抛物模式再转一圈
             if(mode==THROW_MODE&&turn_cnt==1)
@@ -386,10 +386,10 @@ static void init_pid()
     {
         rt_kprintf("line track open wrong.\n");
     }
-    rt_kprintf("line angle:		%d.%03d	%d.%02d	%d.%03d.\n", (s32)pid.angle.p, (s32)(pid.angle.p*1000.0f) % 1000,
+    rt_kprintf("line angle:\t\t%d.%03d\t%d.%02d\t%d.%03d.\n", (s32)pid.angle.p, (s32)(pid.angle.p*1000.0f) % 1000,
     (s32)pid.angle.i, (s32)(pid.angle.i*100.0f) % 100,
     (s32)pid.angle.d, (s32)(pid.angle.d*1000.0f) % 1000);
-    rt_kprintf("line dist :		%d.%03d	%d.%02d	%d.%03d.\n", (s32)pid.dist.p, (s32)(pid.dist.p*1000.0f) % 1000,
+    rt_kprintf("line dist :\t\t%d.%03d\t%d.%02d\t%d.%03d.\n", (s32)pid.dist.p, (s32)(pid.dist.p*1000.0f) % 1000,
     (s32)pid.dist.i, (s32)(pid.dist.i*100.0f) % 100,
     (s32)pid.dist.d, (s32)(pid.dist.d*1000.0f) % 1000);
 }
@@ -405,10 +405,10 @@ static void save_pid()
         write(fd, &pid, sizeof(pid));
         close(fd);
     }
-    rt_kprintf("line angle:		%d.%03d	%d.%02d	%d.%03d.\n", (s32)pid.angle.p, (s32)(pid.angle.p*1000.0f) % 1000,
+    rt_kprintf("line angle:\t\t%d.%03d\t%d.%02d\t%d.%03d.\n", (s32)pid.angle.p, (s32)(pid.angle.p*1000.0f) % 1000,
     (s32)pid.angle.i, (s32)(pid.angle.i*100.0f) % 100,
     (s32)pid.angle.d, (s32)(pid.angle.d*1000.0f) % 1000);
-    rt_kprintf("line dist :		%d.%03d	%d.%02d	%d.%03d.\n", (s32)pid.dist.p, (s32)(pid.dist.p*1000.0f) % 1000,
+    rt_kprintf("line dist :\t\t%d.%03d\t%d.%02d\t%d.%03d.\n", (s32)pid.dist.p, (s32)(pid.dist.p*1000.0f) % 1000,
     (s32)pid.dist.i, (s32)(pid.dist.i*100.0f) % 100,
     (s32)pid.dist.d, (s32)(pid.dist.d*1000.0f) % 1000);
 }
