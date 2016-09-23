@@ -13,5 +13,8 @@ A quadcopter control platform based on `stm32f407` and `rt-thread`.
 * Universal sensor interface (unfinished)
 * Flight task scripts system (unfinished)
 
+### Vision part
+See https://github.com/tcz717/trackline.
+
 ### Progress
-The development of the project has been suspeneded because this project was set for contest at first and the contest has ended up. But if you have some interest, you can contact me and work together.
+The development of the project has been suspeneded because this project was set for contest at first and the contest has ended up. But if you are interesting in, you can contact me and work together.
